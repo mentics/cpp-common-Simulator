@@ -24,54 +24,63 @@ TimeType SchedulerModel<TimeType>::processIncoming() {
 	BOOST_LOG_SEV(lg, level::trace) << "SchedulerModel::processIncoming";
 	// TODO: assert scheduler thread?
 	TimeType minTime = FOREVER<TimeType>();
-	while (!incomingQueue.empty()) {
+	while (!incoming.empty()) {
 		Event<TimeType>* ev;
-		incomingQueue.pop(ev);
+		incoming.pop(ev);
 		TimeType evTime = ev->timeToRun();
 		if (evTime < minTime) {
 			minTime = evTime;
 		}
-		processingQueue.push(ev);
+		processing.push(ev);
 	}
 	//std::sort(processingQueue.begin(), processingQueue.end(), &Event<TimeType>::compare);
 	return minTime;
 }
 
+
+template <typename TimeType>
+void SchedulerModel<TimeType>::reset(TimeType toTime) {
+	// TODO
+	// TODO: delete items off outgoing > toTime
+}
+
+
 template <typename TimeType>
 Event<TimeType>* SchedulerModel<TimeType>::first(TimeType maxTime) {
-	if (!processingQueue.empty()) {
-		Event<TimeType>* top = processingQueue.top();
+	if (!processing.empty()) {
+		Event<TimeType>* top = processing.top();
 		TimeType nextTime = top->timeToRun();
 		if (nextTime <= maxTime) {
-			processingQueue.pop();
 			return top;
 		}
 	}
 	return NULL;
 }
 
-//template <typename TimeType>
-//TimeType SchedulerModel<TimeType>::processFirst(TimeType maxTime) {
-//	BOOST_LOG_SEV(lg, level::trace) << "SchedulerModel::processFirst";
-//	// TODO: assert scheduler thread?
-//
-//	TimeType nextTime = FOREVER();
-//	if (!processingQueue.empty()) {
-//		Event<TimeType>* top = processingQueue.top();
-//		nextTime = top->timeToRun();
-//		if (nextTime < processedTime) {
-//			// TODO: Error: back in time processing that should never happen
-//		}
-//		TimeType maxTime = processedTime + maxTimeAhead;
-//		if (nextTime <= maxTime) {
-//			processingQueue.pop();
-//			processedTime = nextTime;
-//			top->run(this);
-//		}
-//	}
-//
-//	return nextTime;
-//}
+
+template <typename TimeType>
+void SchedulerModel<TimeType>::completeFirst() {
+	outgoing.push_back(processing.top());
+	processing.pop();
+}
+
+
+template <typename TimeType>
+void SchedulerModel<TimeType>::consumeOutgoing(TimeType upToTime, std::function<void(Event<TimeType>*)> handler) {
+	while (!outgoing.empty()) {
+		Event<TimeType>* ev = outgoing.front();
+		if (ev->timeToRun() <= upToTime) {
+			handler(ev);
+			outgoing.pop_front();
+			// Finally after travelling through 3 queues, the event's eventful life has come to an end.
+			delete ev;
+		} else {
+			break;
+		}
+	}
+}
+
+
 
 template <typename TimeType>
 void Scheduler<TimeType>::run() {
@@ -83,11 +92,10 @@ void Scheduler<TimeType>::run() {
 		do {
 			TimeType minTimeToRun = model->processIncoming();
 			if (minTimeToRun < processedTime) {
-				// TODO: reset time to minTimeToRun
+				model->reset(minTimeToRun);
 			}
 			maxTime = processedTime + timeProvider->maxTimeAhead();
 			Event<TimeType>* ev = model->first(maxTime);
-			// TODO: what's next time if it's null? need to wait until then
 			if (ev != NULL) {
 				nextTime = ev->timeToRun();
 				if (nextTime < processedTime) {
@@ -95,7 +103,9 @@ void Scheduler<TimeType>::run() {
 				}
 				processedTime = nextTime;
 				ev->run(model);
+				model->completeFirst();
 				// TODO: memory leak: do we delete the event? what if it rescheduled itself?
+				// problem is: if it rescheduled but we need to have it consumed by front end?
 			} else {
 				nextTime = FOREVER<TimeType>();
 			}

@@ -48,30 +48,33 @@ public:
 	virtual void run(Schedulator<TimeType>* sched) = 0;
 };
 
-
 template <typename TimeType>
 class SchedulerModel : public Schedulator<TimeType> {
 private:
-	boost::lockfree::queue<Event<TimeType>*> incomingQueue;
-	std::priority_queue<Event<TimeType>*, std::vector<Event<TimeType>*>, decltype(&Event<TimeType>::compare)> processingQueue;
+	boost::lockfree::queue<Event<TimeType>*> incoming;
+	std::priority_queue<Event<TimeType>*, std::vector<Event<TimeType>*>, decltype(&Event<TimeType>::compare)> processing;
+	std::deque<Event<TimeType>*> outgoing;
 
 public:
 	SchedulerModel(TimeType forever) :
-		incomingQueue(1024), processingQueue(&Event<TimeType>::compare) {}
+		incoming(1024), processing(&Event<TimeType>::compare) {}
 
 	// Runs on outside thread
 	void schedule(Event<TimeType>* ev) {
-		incomingQueue.push(ev);
+		incoming.push(ev);
 	}
 
 	// Returns minimum timeToRun of ingested events
 	TimeType processIncoming();
+	void reset(TimeType toTime);
 	Event<TimeType>* first(TimeType maxTime);
+	void completeFirst();
+	void consumeOutgoing(TimeType upToTime, std::function<void(Event<TimeType>*)> handler);
 };
 
 
 template <typename TimeType>
-class Scheduler : CanLog {
+class Scheduler : public CanLog {
 private:
 	SchedulerModel<TimeType>* model;
 	SchedulerTimeProvider<TimeType>* timeProvider;

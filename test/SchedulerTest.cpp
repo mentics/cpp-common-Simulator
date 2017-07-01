@@ -71,6 +71,13 @@ public:
 		model.schedule(new TestEvent(3));
 		model.schedule(new TestEvent(4));
 		std::this_thread::sleep_for(100ms);
+		TimeType t = 1;
+		model.consumeOutgoing(5, [&t, &sched](auto ev) {
+			BOOST_LOG_SEV(sched.lg, boost::log::trivial::trace) << "checking " << ev->timeToRun();
+
+			Assert::AreEqual(t, ev->timeToRun());
+			t++;
+		});
 		sched.stop();
 	}
 
