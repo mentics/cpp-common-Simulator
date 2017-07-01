@@ -5,6 +5,7 @@
 //#include <boost/heap/priority_queue.hpp>
 #include <boost/lockfree/queue.hpp>
 #include <vector>
+#include <queue>
 #include <mutex>
 #include <condition_variable>
 #include <memory>
@@ -12,6 +13,19 @@
 
 namespace mentics { namespace scheduler {
 
+template <typename TimeType>
+class Event;
+
+template <typename TimeType>
+class Schedulator {
+public:
+	virtual void schedule(Event<TimeType>* ev) = 0;
+};
+
+class CanLog {
+protected:
+	boost::log::sources::severity_logger_mt<boost::log::trivial::severity_level> lg;
+};
 
 template <typename TimeType>
 struct SchedulerTimeProvider {
@@ -23,31 +37,23 @@ struct SchedulerTimeProvider {
 template <typename TimeType>
 class Event {
 public:
+	static bool compare(Event<TimeType>* ev1, Event<TimeType>* ev2) {
+		return ev1->timeToRun() < ev2->timeToRun();
+	}
+
 	virtual TimeType timeToRun() = 0;
+	virtual void run(Schedulator<TimeType>* sched) = 0;
 };
 
 
-//template <typename TimeType>
-//class EventComparator
-//{
-//public:
-//	bool operator() (const std::unique_ptr<Event<TimeType>>& e1, const std::unique_ptr<Event<TimeType>> e2)
-//	{
-//		return e1->timeToRun() < e2->timeToRun();
-//	}
-//};
-
-
 template <typename TimeType>
-class SchedulerModel {
+class SchedulerModel : CanLog, Schedulator<TimeType> {
 private:
 	boost::lockfree::queue<Event<TimeType>*> incomingQueue;
-	std::vector<Event<TimeType>*> processingQueue;
-	//boost::heap::priority_queue<std::unique_ptr<Event<TimeType>>, boost::heap::compare<EventComparator<TimeType>>> processingQueue;
-	//std::vector<std::unique_ptr<Event<TimeType>>> processingQueue;
+	std::priority_queue<Event<TimeType>*, std::vector<Event<TimeType>*>, decltype(&Event<TimeType>::compare)> processingQueue;
 
 public:
-	SchedulerModel() : incomingQueue(1024) {}
+	SchedulerModel() : incomingQueue(1024), processingQueue(&Event<TimeType>::compare) {}
 
 	// Runs on outside thread
 	void schedule(Event<TimeType>* ev) {
@@ -60,10 +66,8 @@ public:
 
 
 template <typename TimeType>
-class Scheduler {
+class Scheduler : CanLog {
 private:
-	boost::log::sources::severity_logger_mt<boost::log::trivial::severity_level> lg;
-
 	SchedulerModel<TimeType>* model;
 	SchedulerTimeProvider<TimeType>* timeProvider;
 
@@ -77,7 +81,6 @@ private:
 
 public:
 	Scheduler(SchedulerModel<TimeType>* model, SchedulerTimeProvider<TimeType>* timeProvider) :
-		//lock(std::mutex()),
 		model(model), timeProvider(timeProvider),
 		theThread(&Scheduler<TimeType>::run, this) {}
 

@@ -11,27 +11,42 @@ namespace mentics { namespace scheduler {
 
 using namespace std::chrono_literals;
 namespace src = boost::log::sources;
+namespace level = boost::log::trivial;
 
 template <typename TimeType>
 void SchedulerModel<TimeType>::processIncoming() {
+	BOOST_LOG_SEV(lg, level::trace) << "SchedulerModel::processIncoming";
 	// TODO: assert scheduler thread?
 	while (!incomingQueue.empty()) {
 		//std::unique_ptr<Event<TimeType>> ev;
 		Event<TimeType>* ev;
 		incomingQueue.pop(ev);
-		processingQueue.push_back(ev);
+		//processingQueue.push_back(ev);
+		processingQueue.push(ev);
 	}
+	//std::sort(processingQueue.begin(), processingQueue.end(), &Event<TimeType>::compare);
 }
 
 template <typename TimeType>
 TimeType SchedulerModel<TimeType>::processFirst(TimeType maxTime) {
+	BOOST_LOG_SEV(lg, level::trace) << "SchedulerModel::processFirst";
 	// TODO: assert scheduler thread?
+
+	if (!processingQueue.empty()) {
+		Event<TimeType>* top = processingQueue.top();
+		TimeType nextRunTime = top->timeToRun();
+		if (nextRunTime <= maxTime) {
+			processingQueue.pop();
+			top->run(this);
+		}
+	}
+
 	return 0;
 }
 
 template <typename TimeType>
 void Scheduler<TimeType>::run() {
-	BOOST_LOG_SEV(lg, boost::log::trivial::error) << "Scheduler::run";
+	BOOST_LOG_SEV(lg, boost::log::trivial::trace) << "Scheduler::run";
 
 	while (true) {
 		TimeType nextTime;
@@ -71,8 +86,8 @@ void Scheduler<TimeType>::stop() {
 }
 
 
-template class SchedulerModel<double>;
-template class Scheduler<double>;
+template class SchedulerModel<uint32_t>;
+template class Scheduler<uint32_t>;
 
 
 }}

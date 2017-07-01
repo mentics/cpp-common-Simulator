@@ -15,29 +15,36 @@
 #include "Scheduler.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
-
+using namespace std::chrono_literals;
 
 namespace mentics { namespace scheduler {
 
-using namespace std::chrono_literals;
-	//using namespace logging::trivial;
-	//namespace logging = boost::log;
-	//namespace src = boost::log::sources;
-	//namespace sinks = boost::log::sinks;
+typedef uint32_t TimeType;
 
-struct TestTimeProvider : public SchedulerTimeProvider<double> {
-	double maxTime() {
-		return 0;
+struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
+	TimeType max;
+	TimeType until;
+
+	TimeType maxTime() {
+		return max;
 	}
-	double realTimeUntil(double t) {
-		return 0;
+	TimeType realTimeUntil(TimeType t) {
+		return until;
 	}
 };
 
-class TestEvent : public Event<double> {
+class TestEvent : public Event<TimeType> {
+private:
+	TimeType runAt;
 public:
-	double timeToRun() {
-		return 0;
+	TestEvent(TimeType runAt) : runAt(runAt) {}
+
+	TimeType timeToRun() {
+		return runAt;
+	}
+
+	void run(Schedulator<TimeType>* sched) {
+
 	}
 };
 
@@ -57,9 +64,9 @@ public:
 	TEST_METHOD(TestScheduler)
 	{
 		TestTimeProvider timeProvider;
-		SchedulerModel<double> model;
-		Scheduler<double> sched(&model, (SchedulerTimeProvider<double>*)&timeProvider);
-		std::this_thread::sleep_for(0.5s);
+		SchedulerModel<TimeType> model;
+		Scheduler<TimeType> sched(&model, (SchedulerTimeProvider<TimeType>*)&timeProvider);
+		model.schedule(new TestEvent(1));
 		sched.stop();
 	}
 
