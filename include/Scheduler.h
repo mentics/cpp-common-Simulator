@@ -14,22 +14,25 @@
 namespace mentics { namespace scheduler {
 
 template <typename TimeType>
+TimeType FOREVER();
+
+template <typename TimeType>
 class Event;
 
 template <typename TimeType>
-class Schedulator {
+class Schedulator : public CanLog {
 public:
 	virtual void schedule(Event<TimeType>* ev) = 0;
 };
 
 class CanLog {
-protected:
+public:
 	boost::log::sources::severity_logger_mt<boost::log::trivial::severity_level> lg;
 };
 
 template <typename TimeType>
 struct SchedulerTimeProvider {
-	virtual TimeType maxTime() = 0;
+	virtual TimeType maxTimeAhead() = 0;
 	virtual TimeType realTimeUntil(TimeType t) = 0;
 };
 
@@ -38,7 +41,7 @@ template <typename TimeType>
 class Event {
 public:
 	static bool compare(Event<TimeType>* ev1, Event<TimeType>* ev2) {
-		return ev1->timeToRun() < ev2->timeToRun();
+		return ev1->timeToRun() > ev2->timeToRun();
 	}
 
 	virtual TimeType timeToRun() = 0;
@@ -47,21 +50,23 @@ public:
 
 
 template <typename TimeType>
-class SchedulerModel : CanLog, Schedulator<TimeType> {
+class SchedulerModel : public Schedulator<TimeType> {
 private:
 	boost::lockfree::queue<Event<TimeType>*> incomingQueue;
 	std::priority_queue<Event<TimeType>*, std::vector<Event<TimeType>*>, decltype(&Event<TimeType>::compare)> processingQueue;
 
 public:
-	SchedulerModel() : incomingQueue(1024), processingQueue(&Event<TimeType>::compare) {}
+	SchedulerModel(TimeType forever) :
+		incomingQueue(1024), processingQueue(&Event<TimeType>::compare) {}
 
 	// Runs on outside thread
 	void schedule(Event<TimeType>* ev) {
 		incomingQueue.push(ev);
 	}
 
-	void processIncoming();
-	TimeType processFirst(TimeType maxTime);
+	// Returns minimum timeToRun of ingested events
+	TimeType processIncoming();
+	Event<TimeType>* first(TimeType maxTime);
 };
 
 
@@ -82,7 +87,8 @@ private:
 public:
 	Scheduler(SchedulerModel<TimeType>* model, SchedulerTimeProvider<TimeType>* timeProvider) :
 		model(model), timeProvider(timeProvider),
-		theThread(&Scheduler<TimeType>::run, this) {}
+		theThread(&Scheduler<TimeType>::run, this),
+		processedTime(0) {}
 
 	void run();
 

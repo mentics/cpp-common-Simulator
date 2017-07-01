@@ -22,10 +22,10 @@ namespace mentics { namespace scheduler {
 typedef uint32_t TimeType;
 
 struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
-	TimeType max;
-	TimeType until;
+	TimeType max = 2000;
+	TimeType until = 500;
 
-	TimeType maxTime() {
+	TimeType maxTimeAhead() {
 		return max;
 	}
 	TimeType realTimeUntil(TimeType t) {
@@ -44,7 +44,7 @@ public:
 	}
 
 	void run(Schedulator<TimeType>* sched) {
-
+		BOOST_LOG_SEV(sched->lg, boost::log::trivial::trace) << "TestEvent for " << runAt;
 	}
 };
 
@@ -64,9 +64,13 @@ public:
 	TEST_METHOD(TestScheduler)
 	{
 		TestTimeProvider timeProvider;
-		SchedulerModel<TimeType> model;
+		SchedulerModel<TimeType> model(1000000000);
 		Scheduler<TimeType> sched(&model, (SchedulerTimeProvider<TimeType>*)&timeProvider);
 		model.schedule(new TestEvent(1));
+		model.schedule(new TestEvent(2));
+		model.schedule(new TestEvent(3));
+		model.schedule(new TestEvent(4));
+		std::this_thread::sleep_for(100ms);
 		sched.stop();
 	}
 
