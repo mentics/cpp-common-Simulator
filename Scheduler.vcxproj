@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8BF9D5DA-2A1E-4817-8604-3AA7801FFA1F}</ProjectGuid>
+    <ProjectGuid>{459FCE30-6405-43E4-A053-3D6513B53840}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Network</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
@@ -158,6 +158,11 @@
   <ItemGroup>
     <ClCompile Include="src\Scheduler.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\common\Common.vcxproj">
+      <Project>{a1cea56a-2f14-4457-b2b1-bfb7c2c02c56}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

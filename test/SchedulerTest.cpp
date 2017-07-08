@@ -19,7 +19,7 @@ using namespace std::chrono_literals;
 
 namespace mentics { namespace scheduler {
 
-typedef uint32_t TimeType;
+typedef uint64_t TimeType;
 
 struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
 	TimeType max = 2000;
@@ -44,7 +44,7 @@ public:
 	}
 
 	void run(Schedulator<TimeType>* sched) {
-		BOOST_LOG_SEV(sched->lg, boost::log::trivial::trace) << "TestEvent for " << runAt;
+		//BOOST_LOG_SEV(sched->lg, boost::log::trivial::trace) << "TestEvent for " << runAt;
 	}
 };
 
@@ -64,8 +64,8 @@ public:
 	TEST_METHOD(TestScheduler)
 	{
 		TestTimeProvider timeProvider;
-		SchedulerModel<TimeType> model(1000000000);
-		Scheduler<TimeType> sched(&model, (SchedulerTimeProvider<TimeType>*)&timeProvider);
+		SchedulerModel<TimeType> model("SchedulerModel");
+		Scheduler<TimeType> sched("Scheduler", &model, (SchedulerTimeProvider<TimeType>*)&timeProvider);
 		model.schedule(new TestEvent(1));
 		model.schedule(new TestEvent(2));
 		model.schedule(new TestEvent(3));

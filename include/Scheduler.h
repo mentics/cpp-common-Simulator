@@ -1,8 +1,5 @@
 #pragma once
 
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/trivial.hpp>
-//#include <boost/heap/priority_queue.hpp>
 #include <boost/lockfree/queue.hpp>
 #include <vector>
 #include <queue>
@@ -10,8 +7,11 @@
 #include <condition_variable>
 #include <memory>
 
+#include "MenticsCommon.h"
 
 namespace mentics { namespace scheduler {
+
+namespace cmn = mentics::common;
 
 template <typename TimeType>
 TimeType FOREVER();
@@ -20,14 +20,9 @@ template <typename TimeType>
 class Event;
 
 template <typename TimeType>
-class Schedulator : public CanLog {
+class Schedulator {
 public:
 	virtual void schedule(Event<TimeType>* ev) = 0;
-};
-
-class CanLog {
-public:
-	boost::log::sources::severity_logger_mt<boost::log::trivial::severity_level> lg;
 };
 
 template <typename TimeType>
@@ -49,18 +44,22 @@ public:
 };
 
 template <typename TimeType>
-class SchedulerModel : public Schedulator<TimeType> {
+class SchedulerModel : public cmn::CanLog {
 private:
 	boost::lockfree::queue<Event<TimeType>*> incoming;
 	std::priority_queue<Event<TimeType>*, std::vector<Event<TimeType>*>, decltype(&Event<TimeType>::compare)> processing;
 	std::deque<Event<TimeType>*> outgoing;
 
 public:
-	SchedulerModel(TimeType forever) :
+	SchedulerModel(std::string name) : CanLog(name),
 		incoming(1024), processing(&Event<TimeType>::compare) {}
+	~SchedulerModel() {
+		LOG(boost::log::trivial::error) << "SchedulerModel destructor";
+	}
 
 	// Runs on outside thread
 	void schedule(Event<TimeType>* ev) {
+		LOG(boost::log::trivial::trace) << "Scheduling event";
 		incoming.push(ev);
 	}
 
@@ -74,7 +73,7 @@ public:
 
 
 template <typename TimeType>
-class Scheduler : public CanLog {
+class Scheduler : public cmn::CanLog, public Schedulator<TimeType> {
 private:
 	SchedulerModel<TimeType>* model;
 	SchedulerTimeProvider<TimeType>* timeProvider;
@@ -88,12 +87,23 @@ private:
 	TimeType processedTime;
 
 public:
-	Scheduler(SchedulerModel<TimeType>* model, SchedulerTimeProvider<TimeType>* timeProvider) :
+	Scheduler(std::string name, SchedulerModel<TimeType>* model, SchedulerTimeProvider<TimeType>* timeProvider) :
+		CanLog(name),
 		model(model), timeProvider(timeProvider),
 		theThread(&Scheduler<TimeType>::run, this),
 		processedTime(0) {}
 
+	~Scheduler() {
+		LOG(boost::log::trivial::error) << "Scheduler destructor";
+	}
+
 	void run();
+
+	void schedule(Event<TimeType>* ev) {
+		model->schedule(ev);
+		LOG(boost::log::trivial::trace) << "notifying...";
+		wait.notify_all(); // Wake up in case we're asleep
+	}
 
 	void stop();
 };

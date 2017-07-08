@@ -1,27 +1,27 @@
 #include "stdafx.h"
-#include "Scheduler.h"
 
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <chrono>
 
-namespace mentics { namespace scheduler {
+#include "Scheduler.h"
 
+namespace mentics { namespace scheduler {
 
 using namespace std::chrono_literals;
 namespace src = boost::log::sources;
-namespace level = boost::log::trivial;
+namespace lvl = boost::log::trivial;
 
 template<>
-uint32_t FOREVER<uint32_t>() {
-	return std::numeric_limits<uint32_t>::max();
+uint64_t FOREVER<uint64_t>() {
+	return std::numeric_limits<uint64_t>::max();
 }
 
 
 template <typename TimeType>
 TimeType SchedulerModel<TimeType>::processIncoming() {
-	BOOST_LOG_SEV(lg, level::trace) << "SchedulerModel::processIncoming";
+	LOG(lvl::trace) << "SchedulerModel::processIncoming";
 	// TODO: assert scheduler thread?
 	TimeType minTime = FOREVER<TimeType>();
 	while (!incoming.empty()) {
@@ -84,7 +84,7 @@ void SchedulerModel<TimeType>::consumeOutgoing(TimeType upToTime, std::function<
 
 template <typename TimeType>
 void Scheduler<TimeType>::run() {
-	BOOST_LOG_SEV(lg, level::trace) << "Scheduler::run";
+	LOG(lvl::trace) << "Scheduler::run";
 
 	while (true) {
 		TimeType nextTime;
@@ -99,10 +99,10 @@ void Scheduler<TimeType>::run() {
 			if (ev != NULL) {
 				nextTime = ev->timeToRun();
 				if (nextTime < processedTime) {
-					BOOST_LOG_SEV(lg, level::error) << "Back in time processing";
+					LOG(lvl::error) << "Back in time processing";
 				}
 				processedTime = nextTime;
-				ev->run(model);
+				ev->run(this);
 				model->completeFirst();
 				// TODO: memory leak: do we delete the event? what if it rescheduled itself?
 				// problem is: if it rescheduled but we need to have it consumed by front end?
@@ -113,7 +113,7 @@ void Scheduler<TimeType>::run() {
 
 		if (!shouldStop) {
 			TimeType sleepTime = timeProvider->realTimeUntil(nextTime);
-			BOOST_LOG_SEV(lg, boost::log::trivial::trace) << "Sleeping for " << sleepTime;
+			LOG(boost::log::trivial::trace) << "Sleeping for " << sleepTime;
 			{
 				std::unique_lock<std::mutex> lock(mtx);
 				wait.wait_for(lock, 1000000s + sleepTime * 1ms);
@@ -122,7 +122,7 @@ void Scheduler<TimeType>::run() {
 		else {
 			break;
 		}
-		BOOST_LOG_SEV(lg, boost::log::trivial::error) << "looping again...";
+		LOG(boost::log::trivial::error) << "looping again...";
 	}
 }
 
@@ -130,15 +130,15 @@ void Scheduler<TimeType>::run() {
 template <typename TimeType>
 void Scheduler<TimeType>::stop() {
 	shouldStop = true;
-	BOOST_LOG_SEV(lg, boost::log::trivial::error) << "notifying...";
+	LOG(boost::log::trivial::error) << "notifying...";
 	wait.notify_all();
-	BOOST_LOG_SEV(lg, boost::log::trivial::error) << "joining...";
+	LOG(boost::log::trivial::error) << "joining...";
 	theThread.join();
 }
 
 
-template class SchedulerModel<uint32_t>;
-template class Scheduler<uint32_t>;
+template class SchedulerModel<uint64_t>;
+template class Scheduler<uint64_t>;
 
 
 }}
