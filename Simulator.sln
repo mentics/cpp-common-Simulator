@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scheduler", "Scheduler.vcxproj", "{8BF9D5DA-2A1E-4817-8604-3AA7801FFA1F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Simulator", "Simulator.vcxproj", "{8BF9D5DA-2A1E-4817-8604-3AA7801FFA1F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SchedulerTest", "test\SchedulerTest.vcxproj", "{54509F0F-82EC-4376-8FE8-CF69AC652753}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimulatorTest", "test\SimulatorTest.vcxproj", "{54509F0F-82EC-4376-8FE8-CF69AC652753}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
