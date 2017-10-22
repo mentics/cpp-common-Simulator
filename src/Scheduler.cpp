@@ -1,10 +1,5 @@
 #include "stdafx.h"
 
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <chrono>
-
 #include "Scheduler.h"
 
 namespace mentics { namespace scheduler {
@@ -14,7 +9,7 @@ namespace src = boost::log::sources;
 namespace lvl = boost::log::trivial;
 
 template<>
-uint64_t FOREVER<uint64_t>() {
+inline uint64_t FOREVER<uint64_t>() {
 	return std::numeric_limits<uint64_t>::max();
 }
 
