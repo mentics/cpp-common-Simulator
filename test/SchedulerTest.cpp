@@ -16,6 +16,10 @@ struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
 	TimeType max = 2000;
 	TimeType until = 500;
 
+	TimeType now() {
+		return 0;
+	}
+
 	TimeType maxTimeAhead() {
 		return max;
 	}
@@ -25,14 +29,8 @@ struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
 };
 
 class TestEvent : public Event<TimeType> {
-private:
-	TimeType runAt;
 public:
-	TestEvent(TimeType runAt) : runAt(runAt) {}
-
-	TimeType timeToRun() {
-		return runAt;
-	}
+	TestEvent(TimeType runAt) : Event(runAt) {}
 
 	void run(Schedulator<TimeType>* sched) {
 		//BOOST_LOG_SEV(sched->lg, boost::log::trivial::trace) << "TestEvent for " << runAt;
@@ -58,9 +56,9 @@ public:
 		std::this_thread::sleep_for(100ms);
 		TimeType t = 1;
 		model.consumeOutgoing(5, [&t, &sched](auto ev) {
-			BOOST_LOG_SEV(sched.lg, boost::log::trivial::trace) << "checking " << ev->timeToRun();
+			BOOST_LOG_SEV(sched.lg, boost::log::trivial::trace) << "checking " << ev->timeToRun;
 
-			Assert::AreEqual(t, ev->timeToRun());
+			Assert::AreEqual(t, ev->timeToRun);
 			t++;
 		});
 		sched.stop();

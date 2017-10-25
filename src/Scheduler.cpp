@@ -22,7 +22,7 @@ TimeType SchedulerModel<TimeType>::processIncoming() {
 	while (!incoming.empty()) {
 		Event<TimeType>* ev;
 		incoming.pop(ev);
-		TimeType evTime = ev->timeToRun();
+		TimeType evTime = ev->timeToRun;
 		if (evTime < minTime) {
 			minTime = evTime;
 		}
@@ -44,7 +44,7 @@ template <typename TimeType>
 Event<TimeType>* SchedulerModel<TimeType>::first(TimeType maxTime) {
 	if (!processing.empty()) {
 		Event<TimeType>* top = processing.top();
-		TimeType nextTime = top->timeToRun();
+		TimeType nextTime = top->timeToRun;
 		if (nextTime <= maxTime) {
 			return top;
 		}
@@ -64,7 +64,7 @@ template <typename TimeType>
 void SchedulerModel<TimeType>::consumeOutgoing(TimeType upToTime, std::function<void(Event<TimeType>*)> handler) {
 	while (!outgoing.empty()) {
 		Event<TimeType>* ev = outgoing.front();
-		if (ev->timeToRun() <= upToTime) {
+		if (ev->timeToRun <= upToTime) {
 			handler(ev);
 			outgoing.pop_front();
 			// Finally after travelling through 3 queues, the event's eventful life has come to an end.
@@ -92,7 +92,7 @@ void Scheduler<TimeType>::run() {
 			maxTime = processedTime + timeProvider->maxTimeAhead();
 			Event<TimeType>* ev = model->first(maxTime);
 			if (ev != NULL) {
-				nextTime = ev->timeToRun();
+				nextTime = ev->timeToRun;
 				if (nextTime < processedTime) {
 					LOG(lvl::error) << "Back in time processing";
 				}

@@ -26,6 +26,7 @@ public:
 
 template <typename TimeType>
 struct SchedulerTimeProvider {
+	virtual TimeType now() = 0;
 	virtual TimeType maxTimeAhead() = 0;
 	virtual TimeType realTimeUntil(TimeType t) = 0;
 };
@@ -34,11 +35,16 @@ struct SchedulerTimeProvider {
 template <typename TimeType>
 class Event {
 public:
-	static bool compare(Event<TimeType>* ev1, Event<TimeType>* ev2) {
-		return ev1->timeToRun() > ev2->timeToRun();
+	const TimeType timeToRun;
+
+	Event(TimeType timeToRun) : timeToRun(timeToRun) {
 	}
 
-	virtual TimeType timeToRun() = 0;
+	static bool compare(Event<TimeType>* ev1, Event<TimeType>* ev2) {
+		return ev1->timeToRun > ev2->timeToRun;
+	}
+
+//	virtual TimeType timeToRun() = 0;
 	virtual void run(Schedulator<TimeType>* sched) = 0;
 };
 
