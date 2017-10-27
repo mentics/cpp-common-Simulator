@@ -40,7 +40,7 @@ public:
 	Event(TimeType timeToRun) : timeToRun(timeToRun) {
 	}
 
-	static bool compare(Event<TimeType>* ev1, Event<TimeType>* ev2) {
+	static bool compare(const Event<TimeType>* ev1, const Event<TimeType>* ev2) {
 		return ev1->timeToRun > ev2->timeToRun;
 	}
 
@@ -63,6 +63,7 @@ public:
 	}
 
 	// Runs on outside thread
+	//void schedule(gsl::not_null<std::unique_ptr<Event<TimeType>> ev) {
 	void schedule(Event<TimeType>* ev) {
 		LOG(boost::log::trivial::trace) << "Scheduling event";
 		incoming.push(ev);
@@ -100,6 +101,7 @@ public:
 
 	~Scheduler() {
 		LOG(boost::log::trivial::error) << "Scheduler destructor";
+		stop();
 	}
 
 	void run();
@@ -107,7 +109,11 @@ public:
 	void schedule(Event<TimeType>* ev) {
 		model->schedule(ev);
 		LOG(boost::log::trivial::trace) << "notifying...";
-		wait.notify_all(); // Wake up in case we're asleep
+		wakeUp();
+	}
+
+	void wakeUp() {
+		wait.notify_all();
 	}
 
 	void stop();

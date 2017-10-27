@@ -48,7 +48,7 @@ public:
 	{
 		TestTimeProvider timeProvider;
 		SchedulerModel<TimeType> model("SchedulerModel");
-		Scheduler<TimeType> sched("Scheduler", &model, (SchedulerTimeProvider<TimeType>*)&timeProvider);
+		Scheduler<TimeType> sched("Scheduler", &model, &timeProvider);
 		model.schedule(new TestEvent(1));
 		model.schedule(new TestEvent(2));
 		model.schedule(new TestEvent(3));

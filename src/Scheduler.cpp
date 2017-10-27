@@ -44,7 +44,7 @@ template <typename TimeType>
 Event<TimeType>* SchedulerModel<TimeType>::first(TimeType maxTime) {
 	if (!processing.empty()) {
 		Event<TimeType>* top = processing.top();
-		TimeType nextTime = top->timeToRun;
+		const TimeType nextTime = top->timeToRun;
 		if (nextTime <= maxTime) {
 			return top;
 		}
@@ -82,8 +82,8 @@ void Scheduler<TimeType>::run() {
 	LOG(lvl::trace) << "Scheduler::run";
 
 	while (true) {
-		TimeType nextTime;
-		TimeType maxTime;
+		TimeType nextTime = 0;
+		TimeType maxTime = 0;
 		do {
 			TimeType minTimeToRun = model->processIncoming();
 			if (minTimeToRun < processedTime) {
@@ -127,8 +127,10 @@ void Scheduler<TimeType>::stop() {
 	shouldStop = true;
 	LOG(boost::log::trivial::error) << "notifying...";
 	wait.notify_all();
-	LOG(boost::log::trivial::error) << "joining...";
-	theThread.join();
+	if (theThread.joinable()) {
+		LOG(boost::log::trivial::error) << "joining...";
+		theThread.join();
+	}
 }
 
 
