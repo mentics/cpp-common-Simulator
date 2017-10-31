@@ -1,16 +1,15 @@
 #pragma once
 
-#include <boost/lockfree/queue.hpp>
+#include "concurrentqueue.h"
 #include <vector>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
 
 #include "MenticsCommon.h"
+#include "PriorityQueue.h"
 
 namespace mentics { namespace scheduler {
-
-namespace cmn = mentics::common;
 
 template <typename TimeType>
 TimeType FOREVER();
@@ -19,10 +18,19 @@ template <typename TimeType>
 class Event;
 
 template <typename TimeType>
+//using EventUniquePtr = std::unique_ptr<Event<TimeType>>;
+using EventUniquePtr = nn::nn<std::unique_ptr<Event<TimeType>>>;
+
+template <typename TimeType>
+using EventPtr = nn::nn<Event<TimeType>*>;
+
+
+template <typename TimeType>
 class Schedulator {
 public:
-	virtual void schedule(Event<TimeType>* ev) = 0;
+	virtual void schedule(EventUniquePtr<TimeType> ev) = 0;
 };
+
 
 template <typename TimeType>
 struct SchedulerTimeProvider {
@@ -33,27 +41,48 @@ struct SchedulerTimeProvider {
 
 
 template <typename TimeType>
-class Event {
-public:
+struct Event {
+	const TimeType created;
 	const TimeType timeToRun;
 
-	Event(TimeType timeToRun) : timeToRun(timeToRun) {
+	Event(const TimeType created, const TimeType timeToRun) : created(created), timeToRun(timeToRun) {
 	}
 
-	static bool compare(const Event<TimeType>* ev1, const Event<TimeType>* ev2) {
+	static bool compare(const EventUniquePtr<TimeType>& ev1, const EventUniquePtr<TimeType>& ev2) {
 		return ev1->timeToRun > ev2->timeToRun;
 	}
 
-//	virtual TimeType timeToRun() = 0;
 	virtual void run(Schedulator<TimeType>* sched) = 0;
 };
+template <typename TimeType>
+class EventZero : public Event<TimeType> {
+public:
+	EventZero() : Event(0, 0) {}
+	virtual void run(Schedulator<TimeType>* sched) {};
+};
+
+
+template <typename TimeType>
+struct OutEvent {
+	const TimeType occursAt;
+
+	OutEvent(const TimeType occursAt) : created(occursAt) {
+	}
+};
+template <typename TimeType>
+using OutEventUniquePtr = std::unique_ptr<OutEvent<TimeType>>;
+//using OutEventUniquePtr = nn::nn<std::unique_ptr<OutEvent<TimeType>>>;
+
 
 template <typename TimeType>
 class SchedulerModel : public cmn::CanLog {
 private:
-	boost::lockfree::queue<Event<TimeType>*> incoming;
-	std::priority_queue<Event<TimeType>*, std::vector<Event<TimeType>*>, decltype(&Event<TimeType>::compare)> processing;
-	std::deque<Event<TimeType>*> outgoing;
+//	boost::lockfree::queue<EventUniquePtr<TimeType>> incoming;
+	moodycamel::ConcurrentQueue<EventUniquePtr<TimeType>> incoming;
+	//std::priority_queue<EventUniquePtr<TimeType>, std::vector<EventUniquePtr<TimeType>>, decltype(&Event<TimeType>::compare)> processing;
+	PriorityQueue<EventUniquePtr<TimeType>, decltype(&Event<TimeType>::compare)> processing;
+	std::deque<EventUniquePtr<TimeType>> forReset;
+	std::deque<OutEventUniquePtr<TimeType>> outgoing;
 
 public:
 	SchedulerModel(std::string name) : CanLog(name),
@@ -64,9 +93,9 @@ public:
 
 	// Runs on outside thread
 	//void schedule(gsl::not_null<std::unique_ptr<Event<TimeType>> ev) {
-	void schedule(Event<TimeType>* ev) {
+	void schedule(EventUniquePtr<TimeType> ev) {
 		LOG(boost::log::trivial::trace) << "Scheduling event";
-		incoming.push(ev);
+		incoming.enqueue(std::move(ev));
 	}
 
 	// Returns minimum timeToRun of ingested events
@@ -74,7 +103,7 @@ public:
 	void reset(TimeType toTime);
 	Event<TimeType>* first(TimeType maxTime);
 	void completeFirst();
-	void consumeOutgoing(TimeType upToTime, std::function<void(Event<TimeType>*)> handler);
+	void consumeOutgoing(TimeType upToTime, std::function<void(OutEvent<TimeType>*)> handler);
 };
 
 
@@ -106,8 +135,8 @@ public:
 
 	void run();
 
-	void schedule(Event<TimeType>* ev) {
-		model->schedule(ev);
+	void schedule(EventUniquePtr<TimeType> ev) {
+		model->schedule(std::move(ev));
 		LOG(boost::log::trivial::trace) << "notifying...";
 		wakeUp();
 	}
@@ -121,3 +150,5 @@ public:
 
 
 }}
+
+namespace sched = mentics::scheduler;

@@ -19,14 +19,13 @@ TimeType SchedulerModel<TimeType>::processIncoming() {
 	LOG(lvl::trace) << "SchedulerModel::processIncoming";
 	// TODO: assert scheduler thread?
 	TimeType minTime = FOREVER<TimeType>();
-	while (!incoming.empty()) {
-		Event<TimeType>* ev;
-		incoming.pop(ev);
+	EventUniquePtr<TimeType> ev = uniquePtr<EventZero<TimeType>>();
+	while (incoming.try_dequeue(ev)) {
 		TimeType evTime = ev->timeToRun;
 		if (evTime < minTime) {
 			minTime = evTime;
 		}
-		processing.push(ev);
+		processing.push(std::move(ev));
 	}
 	//std::sort(processingQueue.begin(), processingQueue.end(), &Event<TimeType>::compare);
 	return minTime;
@@ -43,32 +42,33 @@ void SchedulerModel<TimeType>::reset(TimeType toTime) {
 template <typename TimeType>
 Event<TimeType>* SchedulerModel<TimeType>::first(TimeType maxTime) {
 	if (!processing.empty()) {
-		Event<TimeType>* top = processing.top();
+		Event<TimeType>* top = processing.top().get();
 		const TimeType nextTime = top->timeToRun;
 		if (nextTime <= maxTime) {
 			return top;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 
 template <typename TimeType>
 void SchedulerModel<TimeType>::completeFirst() {
-	outgoing.push_back(processing.top());
-	processing.pop();
+	forReset.push_back(processing.pop());
+	//forReset.push_back(std::move(const_cast<EventUniquePtr<TimeType>&>(processing.top())));
+	//processing.pop();
 }
 
 
 template <typename TimeType>
-void SchedulerModel<TimeType>::consumeOutgoing(TimeType upToTime, std::function<void(Event<TimeType>*)> handler) {
+void SchedulerModel<TimeType>::consumeOutgoing(TimeType upToTime, std::function<void(OutEvent<TimeType>*)> handler) {
 	while (!outgoing.empty()) {
-		Event<TimeType>* ev = outgoing.front();
-		if (ev->timeToRun <= upToTime) {
+		OutEvent<TimeType>* ev = outgoing.front().get();
+		if (ev->occursAt <= upToTime) {
 			handler(ev);
 			outgoing.pop_front();
 			// Finally after travelling through 3 queues, the event's eventful life has come to an end.
-			delete ev;
+			// delete ev; <- it's deleted by unique_ptr
 		} else {
 			break;
 		}

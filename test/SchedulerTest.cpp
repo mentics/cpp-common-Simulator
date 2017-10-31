@@ -30,7 +30,7 @@ struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
 
 class TestEvent : public Event<TimeType> {
 public:
-	TestEvent(TimeType runAt) : Event(runAt) {}
+	TestEvent(const TimeType created, const TimeType runAt) : Event(created, runAt) {}
 
 	void run(Schedulator<TimeType>* sched) {
 		//BOOST_LOG_SEV(sched->lg, boost::log::trivial::trace) << "TestEvent for " << runAt;
@@ -44,21 +44,20 @@ public:
 		mentics::test::setupLog();
 	}
 
-	TEST_METHOD(TestScheduler)
-	{
+	TEST_METHOD(TestScheduler) {
 		TestTimeProvider timeProvider;
 		SchedulerModel<TimeType> model("SchedulerModel");
 		Scheduler<TimeType> sched("Scheduler", &model, &timeProvider);
-		model.schedule(new TestEvent(1));
-		model.schedule(new TestEvent(2));
-		model.schedule(new TestEvent(3));
-		model.schedule(new TestEvent(4));
+		model.schedule(uniquePtr<TestEvent>(1, 1));
+		model.schedule(uniquePtr<TestEvent>(2, 2));
+		model.schedule(uniquePtr<TestEvent>(3, 3));
+		model.schedule(uniquePtr<TestEvent>(4, 4));
 		std::this_thread::sleep_for(100ms);
 		TimeType t = 1;
 		model.consumeOutgoing(5, [&t, &sched](auto ev) {
-			BOOST_LOG_SEV(sched.lg, boost::log::trivial::trace) << "checking " << ev->timeToRun;
+			BOOST_LOG_SEV(sched.lg, boost::log::trivial::trace) << "checking " << ev->occursAt;
 
-			Assert::AreEqual(t, ev->timeToRun);
+			Assert::AreEqual(t, ev->occursAt);
 			t++;
 		});
 		sched.stop();
