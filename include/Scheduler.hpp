@@ -2,7 +2,7 @@
 
 #include "Scheduler.h"
 
-namespace mentics { namespace scheduler {
+namespace MenticsGame {
 
 using namespace std::chrono_literals;
 namespace src = boost::log::sources;
@@ -126,4 +126,4 @@ void Scheduler<TimeType,Model>::stop() {
 	}
 }
 
-}}
+}

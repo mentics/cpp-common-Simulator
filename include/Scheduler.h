@@ -9,7 +9,7 @@
 #include "MenticsCommon.h"
 #include "PriorityQueue.h"
 
-namespace mentics { namespace scheduler {
+namespace MenticsGame {
 
 template <typename TimeType, typename Model> class Event;
 PTRS2(Event, TimeType, Model)
@@ -67,7 +67,7 @@ struct OutEvent {
 
 
 template <typename TimeType, typename Model>
-class SchedulerModel : public cmn::CanLog, public Schedulator<TimeType, Model> {
+class SchedulerModel : public CanLog, public Schedulator<TimeType, Model> {
 private:
 	moodycamel::ConcurrentQueue<EventUniquePtr<TimeType,Model>> incoming;
 	PriorityQueue<EventUniquePtr<TimeType,Model>, decltype(&Event<TimeType,Model>::compare)> processing;
@@ -103,7 +103,7 @@ PTRS2(SchedulerModel, TimeType, Model)
 
 
 template <typename TimeType, typename Model>
-class Scheduler : public cmn::CanLog {
+class Scheduler : public CanLog {
 public:
 	Scheduler(std::string name, SchedulerModelPtr<TimeType,Model> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model) :
 		CanLog(name),
@@ -145,6 +145,4 @@ private:
 };
 PTRS2(Scheduler, TimeType, Model)
 
-}}
-
-namespace sched = mentics::scheduler;
+}
