@@ -11,25 +11,19 @@
 
 namespace mentics { namespace scheduler {
 
-template <typename TimeType>
-TimeType FOREVER();
-
-template <typename TimeType>
-class Event;
-
-template <typename TimeType>
-//using EventUniquePtr = std::unique_ptr<Event<TimeType>>;
-using EventUniquePtr = nn::nn<std::unique_ptr<Event<TimeType>>>;
-
-template <typename TimeType>
-using EventPtr = nn::nn<Event<TimeType>*>;
+template <typename TimeType, typename Model> class Event;
+PTRS2(Event, TimeType, Model)
+template <typename TimeType> class OutEvent;
+PTRS1(OutEvent, TimeType)
 
 
-template <typename TimeType>
+template <typename TimeType, typename Model>
 class Schedulator {
 public:
-	virtual void schedule(EventUniquePtr<TimeType> ev) = 0;
+	virtual void schedule(EventUniquePtr<TimeType, Model> ev) = 0;
+	virtual void addOutEvent(OutEventUniquePtr<TimeType> outEvent) = 0;
 };
+PTRS2(Schedulator, TimeType, Model)
 
 
 template <typename TimeType>
@@ -38,9 +32,10 @@ struct SchedulerTimeProvider {
 	virtual TimeType maxTimeAhead() = 0;
 	virtual TimeType realTimeUntil(TimeType t) = 0;
 };
+PTRS1(SchedulerTimeProvider, TimeType)
 
 
-template <typename TimeType>
+template <typename TimeType, typename Model>
 struct Event {
 	const TimeType created;
 	const TimeType timeToRun;
@@ -48,17 +43,18 @@ struct Event {
 	Event(const TimeType created, const TimeType timeToRun) : created(created), timeToRun(timeToRun) {
 	}
 
-	static bool compare(const EventUniquePtr<TimeType>& ev1, const EventUniquePtr<TimeType>& ev2) {
+	static bool compare(const EventUniquePtr<TimeType,Model>& ev1, const EventUniquePtr<TimeType,Model>& ev2) {
 		return ev1->timeToRun > ev2->timeToRun;
 	}
 
-	virtual void run(Schedulator<TimeType>* sched) = 0;
+	virtual void run(SchedulatorPtr<TimeType,Model> sched, nn::nn<Model*> model) = 0;
 };
-template <typename TimeType>
-class EventZero : public Event<TimeType> {
+
+template <typename TimeType, typename Model>
+class EventZero : public Event<TimeType,Model> {
 public:
 	EventZero() : Event(0, 0) {}
-	virtual void run(Schedulator<TimeType>* sched) {};
+	void run(SchedulatorPtr<TimeType,Model> sched, nn::nn<Model*> model) {};
 };
 
 
@@ -66,34 +62,27 @@ template <typename TimeType>
 struct OutEvent {
 	const TimeType occursAt;
 
-	OutEvent(const TimeType occursAt) : created(occursAt) {
-	}
+	OutEvent(const TimeType occursAt) : created(occursAt) {}
 };
-template <typename TimeType>
-using OutEventUniquePtr = std::unique_ptr<OutEvent<TimeType>>;
-//using OutEventUniquePtr = nn::nn<std::unique_ptr<OutEvent<TimeType>>>;
 
 
-template <typename TimeType>
-class SchedulerModel : public cmn::CanLog {
+template <typename TimeType, typename Model>
+class SchedulerModel : public cmn::CanLog, public Schedulator<TimeType, Model> {
 private:
-//	boost::lockfree::queue<EventUniquePtr<TimeType>> incoming;
-	moodycamel::ConcurrentQueue<EventUniquePtr<TimeType>> incoming;
-	//std::priority_queue<EventUniquePtr<TimeType>, std::vector<EventUniquePtr<TimeType>>, decltype(&Event<TimeType>::compare)> processing;
-	PriorityQueue<EventUniquePtr<TimeType>, decltype(&Event<TimeType>::compare)> processing;
-	std::deque<EventUniquePtr<TimeType>> forReset;
+	moodycamel::ConcurrentQueue<EventUniquePtr<TimeType,Model>> incoming;
+	PriorityQueue<EventUniquePtr<TimeType,Model>, decltype(&Event<TimeType,Model>::compare)> processing;
+	std::deque<EventUniquePtr<TimeType,Model>> forReset;
 	std::deque<OutEventUniquePtr<TimeType>> outgoing;
 
 public:
 	SchedulerModel(std::string name) : CanLog(name),
-		incoming(1024), processing(&Event<TimeType>::compare) {}
+		incoming(1024), processing(&Event<TimeType,Model>::compare) {}
 	~SchedulerModel() {
 		LOG(boost::log::trivial::error) << "SchedulerModel destructor";
 	}
 
 	// Runs on outside thread
-	//void schedule(gsl::not_null<std::unique_ptr<Event<TimeType>> ev) {
-	void schedule(EventUniquePtr<TimeType> ev) {
+	void schedule(EventUniquePtr<TimeType,Model> ev) {
 		LOG(boost::log::trivial::trace) << "Scheduling event";
 		incoming.enqueue(std::move(ev));
 	}
@@ -101,31 +90,25 @@ public:
 	// Returns minimum timeToRun of ingested events
 	TimeType processIncoming();
 	void reset(TimeType toTime);
-	Event<TimeType>* first(TimeType maxTime);
+	Event<TimeType,Model>* first(TimeType maxTime);
 	void completeFirst();
-	void consumeOutgoing(TimeType upToTime, std::function<void(OutEvent<TimeType>*)> handler);
+
+	void consumeOutgoing(TimeType upToTime, std::function<void(OutEventPtr<TimeType>)> handler);
+
+	void addOutEvent(OutEventUniquePtr<TimeType> outEvent) {
+		outgoing.push_back(std::move(outEvent));
+	}
 };
+PTRS2(SchedulerModel, TimeType, Model)
 
 
-template <typename TimeType>
-class Scheduler : public cmn::CanLog, public Schedulator<TimeType> {
-private:
-	SchedulerModel<TimeType>* model;
-	SchedulerTimeProvider<TimeType>* timeProvider;
-
-	std::thread theThread;
-	bool shouldStop = false;
-	//std::unique_lock<std::mutex> lock;
-	std::mutex mtx;
-	std::condition_variable wait;
-
-	TimeType processedTime;
-
+template <typename TimeType, typename Model>
+class Scheduler : public cmn::CanLog {
 public:
-	Scheduler(std::string name, SchedulerModel<TimeType>* model, SchedulerTimeProvider<TimeType>* timeProvider) :
+	Scheduler(std::string name, SchedulerModelPtr<TimeType,Model> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model) :
 		CanLog(name),
-		model(model), timeProvider(timeProvider),
-		theThread(&Scheduler<TimeType>::run, this),
+		schedModel(schedModel), timeProvider(timeProvider), model(model),
+		theThread(&Scheduler<TimeType,Model>::run, this),
 		processedTime(0) {}
 
 	~Scheduler() {
@@ -135,8 +118,8 @@ public:
 
 	void run();
 
-	void schedule(EventUniquePtr<TimeType> ev) {
-		model->schedule(std::move(ev));
+	void schedule(EventUniquePtr<TimeType,Model> ev) {
+		schedModel->schedule(std::move(ev));
 		LOG(boost::log::trivial::trace) << "notifying...";
 		wakeUp();
 	}
@@ -146,8 +129,21 @@ public:
 	}
 
 	void stop();
-};
 
+private:
+	SchedulerModelPtr<TimeType, Model> schedModel;
+	SchedulerTimeProviderPtr<TimeType> timeProvider;
+	nn::nn<Model*> model;
+
+	std::thread theThread;
+	bool shouldStop = false;
+	//std::unique_lock<std::mutex> lock;
+	std::mutex mtx;
+	std::condition_variable wait;
+
+	TimeType processedTime;
+};
+PTRS2(Scheduler, TimeType, Model)
 
 }}
 

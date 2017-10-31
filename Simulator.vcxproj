@@ -153,12 +153,15 @@
     <ClInclude Include="include\Scheduler.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Scheduler.cpp" />
+    <ClInclude Include="include\Scheduler.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\common\Common.vcxproj">
       <Project>{a1cea56a-2f14-4457-b2b1-bfb7c2c02c56}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Placeholder.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

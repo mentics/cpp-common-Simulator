@@ -3,7 +3,7 @@
 #include <thread>
 
 #include "MenticsCommonTest.h"
-#include "Scheduler.h"
+#include "Scheduler.hpp" // This should be the only place that includes this at this level
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std::chrono_literals;
@@ -11,6 +11,8 @@ using namespace std::chrono_literals;
 namespace mentics { namespace scheduler {
 
 typedef uint64_t TimeType;
+
+struct TestModel {};
 
 struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
 	TimeType max = 2000;
@@ -28,11 +30,11 @@ struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
 	}
 };
 
-class TestEvent : public Event<TimeType> {
+class TestEvent : public Event<TimeType, TestModel> {
 public:
 	TestEvent(const TimeType created, const TimeType runAt) : Event(created, runAt) {}
 
-	void run(Schedulator<TimeType>* sched) {
+	void run(SchedulatorPtr<TimeType, TestModel> sched, nn::nn<TestModel*> model) {
 		//BOOST_LOG_SEV(sched->lg, boost::log::trivial::trace) << "TestEvent for " << runAt;
 	}
 };
@@ -46,15 +48,16 @@ public:
 
 	TEST_METHOD(TestScheduler) {
 		TestTimeProvider timeProvider;
-		SchedulerModel<TimeType> model("SchedulerModel");
-		Scheduler<TimeType> sched("Scheduler", &model, &timeProvider);
-		model.schedule(uniquePtr<TestEvent>(1, 1));
-		model.schedule(uniquePtr<TestEvent>(2, 2));
-		model.schedule(uniquePtr<TestEvent>(3, 3));
-		model.schedule(uniquePtr<TestEvent>(4, 4));
+		SchedulerModel<TimeType,TestModel> schedModel("SchedulerModel");
+		TestModel model;
+		Scheduler<TimeType, TestModel> sched("Scheduler", nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
+		schedModel.schedule(uniquePtrC<Event<TimeType,TestModel>,TestEvent>(1, 1));
+		schedModel.schedule(uniquePtrC<Event<TimeType,TestModel>,TestEvent>(2, 2));
+		schedModel.schedule(uniquePtrC<Event<TimeType,TestModel>,TestEvent>(3, 3));
+		schedModel.schedule(uniquePtrC<Event<TimeType,TestModel>,TestEvent>(4, 4));
 		std::this_thread::sleep_for(100ms);
 		TimeType t = 1;
-		model.consumeOutgoing(5, [&t, &sched](auto ev) {
+		schedModel.consumeOutgoing(5, [&t, &sched](auto ev) {
 			BOOST_LOG_SEV(sched.lg, boost::log::trivial::trace) << "checking " << ev->occursAt;
 
 			Assert::AreEqual(t, ev->occursAt);
