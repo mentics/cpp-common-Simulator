@@ -14,7 +14,7 @@ TimeType SchedulerModel<TimeType,Model>::processIncoming() {
 	LOG(lvl::trace) << "SchedulerModel::processIncoming";
 	// TODO: assert scheduler thread?
 	TimeType minTime = FOREVER;
-	EventUniquePtr<TimeType,Model> ev = uniquePtr<EventZero<TimeType,Model>>();
+	EventUniquePtr<TimeType,Model> ev = uniquePtr<EventZero<TimeType,Model>>(); // TODO: simplify this?
 	while (incoming.try_dequeue(ev)) {
 		TimeType evTime = ev->timeToRun;
 		if (evTime < minTime) {
@@ -100,11 +100,11 @@ void Scheduler<TimeType,Model>::run() {
 		} while (nextTime < maxTime);
 
 		if (!shouldStop) {
-			TimeType sleepTime = timeProvider->realTimeUntil(nextTime);
-			LOG(boost::log::trivial::trace) << "Sleeping for " << sleepTime;
+			const chrono::nanoseconds sleepTime = timeProvider->realTimeUntil(nextTime);
+			LOG(boost::log::trivial::trace) << "Sleeping for " << sleepTime.count() << " ns";
 			{
 				std::unique_lock<std::mutex> lock(mtx);
-				wait.wait_for(lock, 1000000s + sleepTime * 1ms);
+				wait.wait_for(lock, sleepTime);
 			}
 		}
 		else {

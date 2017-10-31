@@ -16,7 +16,7 @@ struct TestModel {};
 
 struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
 	TimeType max = 2000;
-	TimeType until = 500;
+	chrono::nanoseconds until = chrono::nanoseconds(500);
 
 	TimeType now() {
 		return 0;
@@ -25,7 +25,7 @@ struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
 	TimeType maxTimeAhead() {
 		return max;
 	}
-	TimeType realTimeUntil(TimeType t) {
+	chrono::nanoseconds realTimeUntil(TimeType t) {
 		return until;
 	}
 };

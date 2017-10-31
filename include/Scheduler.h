@@ -5,9 +5,12 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <chrono>
 
 #include "MenticsCommon.h"
 #include "PriorityQueue.h"
+
+namespace chrono = std::chrono;
 
 namespace MenticsGame {
 
@@ -30,7 +33,7 @@ template <typename TimeType>
 struct SchedulerTimeProvider {
 	virtual TimeType now() = 0;
 	virtual TimeType maxTimeAhead() = 0;
-	virtual TimeType realTimeUntil(TimeType t) = 0;
+	virtual chrono::nanoseconds realTimeUntil(TimeType t) = 0;
 };
 PTRS1(SchedulerTimeProvider, TimeType)
 
