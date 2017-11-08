@@ -70,6 +70,8 @@ void SchedulerModel<TimeType,Model>::consumeOutgoing(TimeType upToTime, std::fun
 
 
 
+// This is the method run by the Scheduler thread.
+// It loops forever and processes the events on the processing queue up to 
 template <typename TimeType, typename Model>
 void Scheduler<TimeType,Model>::run() {
 	LOG(lvl::trace) << "Scheduler::run";
@@ -80,20 +82,22 @@ void Scheduler<TimeType,Model>::run() {
 		do {
 			TimeType minTimeToRun = schedModel->processIncoming();
 			if (minTimeToRun < processedTime) {
-				schedModel->reset(minTimeToRun);
+				reset(minTimeToRun);
 			}
-			maxTime = processedTime + timeProvider->maxTimeAhead();
+			TimeType now = timeProvider->now();
+			maxTime = now + timeProvider->maxTimeAhead();
 			Event<TimeType,Model>* ev = schedModel->first(maxTime);
 			if (ev != NULL) {
 				nextTime = ev->timeToRun;
+				if (nextTime < now) {
+					LOG(lvl::warning) << "Event time prior to now, event processing can't keep up.";
+				}
 				if (nextTime < processedTime) {
 					LOG(lvl::error) << "Back in time processing";
 				}
 				processedTime = nextTime;
 				ev->run(schedModel, model);
 				schedModel->completeFirst();
-				// TODO: memory leak: do we delete the event? what if it rescheduled itself?
-				// problem is: if it rescheduled but we need to have it consumed by front end?
 			} else {
 				nextTime = FOREVER;
 			}
@@ -112,6 +116,13 @@ void Scheduler<TimeType,Model>::run() {
 		}
 		LOG(boost::log::trivial::error) << "looping again...";
 	}
+}
+
+template <typename TimeType, typename Model>
+void Scheduler<TimeType, Model>::reset(TimeType resetToTime) {
+	// TODO: reset queues to what they were at resetToTime
+	schedModel->reset(resetToTime);
+	model->reset(resetToTime);
 }
 
 

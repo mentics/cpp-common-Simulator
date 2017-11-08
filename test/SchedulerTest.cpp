@@ -12,7 +12,9 @@ namespace mentics { namespace scheduler {
 
 typedef uint64_t TimeType;
 
-struct TestModel {};
+struct TestModel {
+	void reset(TimeType resetToTime) {}
+};
 
 struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
 	TimeType max = 2000;

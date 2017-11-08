@@ -131,7 +131,16 @@ public:
 		wait.notify_all();
 	}
 
+	void reset(TimeType resetToTime);
+
 	void stop();
+
+	// Only used for testing. TODO: untested
+	void WaitUntilProcessed(TimeType until) {
+		do {
+			Thread.Sleep(100);
+		} while (processedTime < until);
+	}
 
 private:
 	SchedulerModelPtr<TimeType, Model> schedModel;
