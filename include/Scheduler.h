@@ -14,9 +14,9 @@ namespace chrono = std::chrono;
 
 namespace MenticsGame {
 
-template <typename TimeType, typename Model> class Event;
+template <typename TimeType, typename Model> struct Event;
 PTRS2(Event, TimeType, Model)
-template <typename TimeType> class OutEvent;
+template <typename TimeType> struct OutEvent;
 PTRS1(OutEvent, TimeType)
 
 
