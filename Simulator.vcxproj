@@ -150,6 +150,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\Scheduler.h" />
+    <ClInclude Include="include\Stateful.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Scheduler.hpp" />

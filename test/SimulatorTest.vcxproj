@@ -163,6 +163,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="SchedulerTest.cpp" />
+    <ClCompile Include="StatefulTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\common\Common.vcxproj">
