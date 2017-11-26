@@ -151,6 +151,7 @@
   <ItemGroup>
     <ClInclude Include="include\Scheduler.h" />
     <ClInclude Include="include\Resettable.h" />
+    <ClInclude Include="include\SignalBase.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Scheduler.hpp" />

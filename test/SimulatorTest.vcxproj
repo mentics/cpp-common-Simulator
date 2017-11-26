@@ -164,6 +164,7 @@
   <ItemGroup>
     <ClCompile Include="SchedulerTest.cpp" />
     <ClCompile Include="ResettableTest.cpp" />
+    <ClCompile Include="SignalTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\common\Common.vcxproj">
