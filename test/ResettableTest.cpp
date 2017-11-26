@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Stateful.h"
+#include "Resettable.h"
 #include "CppUnitTest.h"
 #include "MenticsCommonTest.h"
 //#include "date.h"
@@ -27,19 +27,19 @@ namespace MenticsGame {
 		return a.value == b.value;
 	}
 
-	TEST_CLASS(StatefulTest)
+	TEST_CLASS(ResettableTest)
 	{
 		boost::log::sources::severity_logger<boost::log::trivial::severity_level> lg;
-		const std::string name = "StatefulTest";
+		const std::string name = "ResettableTest";
 
 	public:
 		TEST_CLASS_INITIALIZE(BeforeClass) {
 			setupLog();
 		}
 
-		TEST_METHOD(TestStateBufferFull) {
+		TEST_METHOD(TestResettableBufferFull) {
 			Entity ent;
-			Stateful<Entity, Time> state(ent,2);
+			Resettable<Entity, Time> state(ent,2);
 			Assert::AreEqual(0, state.stateCurrent.value);
 			Assert::AreEqual(state.stateCurrent.value, state.stateOldest.value);
 
@@ -61,9 +61,9 @@ namespace MenticsGame {
 			//state.apply(Change<Entity, Time>(setToOne, Time())); // Assertion fails
 		}
 
-		TEST_METHOD(TestStateMoveOldest) {
+		TEST_METHOD(TestResettableMoveOldest) {
 			Entity ent;
-			Stateful<Entity, Time> state(ent, 10);
+			Resettable<Entity, Time> state(ent, 10);
 
 			auto inc = [](Entity &ent) {
 				ent.value += 1;
@@ -106,10 +106,10 @@ namespace MenticsGame {
 
 		typedef uint64_t RealTime;
 		
-		TEST_METHOD(TestStateCommand) {
+		TEST_METHOD(TestResettableCommand) {
 			class Command {
 			public:
-				Command(Stateful<Entity, RealTime> *target) : target(target) {}
+				Command(Resettable<Entity, RealTime> *target) : target(target) {}
 				void execute() {
 					RealTime now = std::chrono::system_clock::now().time_since_epoch().count();
 					Change<Entity, RealTime> change(action, now);
@@ -117,12 +117,12 @@ namespace MenticsGame {
 				}
 			protected:
 				Action<Entity> action;
-				Stateful<Entity, RealTime> *target;
+				Resettable<Entity, RealTime> *target;
 			};
 
 			class IncrementCommand : public Command {
 			public:
-				IncrementCommand(Stateful<Entity, RealTime> *target) : Command(target) {
+				IncrementCommand(Resettable<Entity, RealTime> *target) : Command(target) {
 					action = [](Entity &e) {
 						e.value++;
 					};
@@ -131,7 +131,7 @@ namespace MenticsGame {
 
 			Entity ent;
 			ent.value = 1;
-			Stateful<Entity, RealTime> state(ent, 10, 0);
+			Resettable<Entity, RealTime> state(ent, 10, 0);
 
 			IncrementCommand inc(&state);
 			inc.execute();
@@ -140,10 +140,10 @@ namespace MenticsGame {
 			Assert::AreEqual(3, state.stateCurrent.value);
 		}
 
-		TEST_METHOD(TestStateReset) {
+		TEST_METHOD(TestResettableReset) {
 			Entity ent;
 			ent.value = 1;
-			Stateful<Entity, Time> state(ent, 10);
+			Resettable<Entity, Time> state(ent, 10);
 
 			auto before = std::chrono::system_clock::now();
 

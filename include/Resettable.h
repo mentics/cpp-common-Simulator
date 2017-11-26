@@ -14,21 +14,21 @@ namespace MenticsGame {
 
 	template<typename T, typename TimeType> using ChangeCallback = std::function<bool (Change<T,TimeType> const&)>;
 
-	class StatefulTest;
+	class ResettableTest;
 
 	template<typename T, typename TimeType>
-	class Stateful
+	class Resettable
 	{
 	public:
-		Stateful(T t, int capacity) : stateOldest(t), stateCurrent(t), buffer(capacity) {}
-		Stateful(T t, int capacity, TimeType time) : stateOldest(t), stateCurrent(t), buffer(capacity), timeCurrent(time) {}
-		~Stateful() {}
+		Resettable(T t, int capacity) : stateOldest(t), stateCurrent(t), buffer(capacity) {}
+		Resettable(T t, int capacity, TimeType time) : stateOldest(t), stateCurrent(t), buffer(capacity), timeCurrent(time) {}
+		~Resettable() {}
 		T getCurrentState() { return stateCurrent; }
 		void apply(Change<T,TimeType> const& change);
 		void moveOldest(TimeType const& time);
 		void reset(TimeType const& time);
 		void walk(ChangeCallback<T,TimeType> const& callback);
-		friend StatefulTest;
+		friend ResettableTest;
 	protected:
 		boost::circular_buffer<Change<T,TimeType>> buffer;
 		TimeType timeCurrent;
@@ -36,7 +36,7 @@ namespace MenticsGame {
 	};
 
 	template<typename T,typename TimeType>
-	void Stateful<T, TimeType>::apply(Change<T, TimeType> const& change)
+	void Resettable<T, TimeType>::apply(Change<T, TimeType> const& change)
 	{
 		assert(change.time > timeCurrent);
 		if (buffer.full()) {
@@ -48,7 +48,7 @@ namespace MenticsGame {
 	}
 
 	template<typename T, typename TimeType>
-	void Stateful<T, TimeType>::moveOldest(TimeType const& time)
+	void Resettable<T, TimeType>::moveOldest(TimeType const& time)
 	{
 		if (time > timeCurrent) {
 			return;
@@ -64,13 +64,13 @@ namespace MenticsGame {
 	}
 
 	template<typename T, typename TimeType>
-	void Stateful<T, TimeType>::walk(ChangeCallback<T,TimeType> const& callback)
+	void Resettable<T, TimeType>::walk(ChangeCallback<T,TimeType> const& callback)
 	{
 		std::find_if(buffer.begin(), buffer.end(), callback);
 	}
 
 	template<typename T, typename TimeType>
-	void Stateful<T, TimeType>::reset(TimeType const& time)
+	void Resettable<T, TimeType>::reset(TimeType const& time)
 	{
 		if (time > timeCurrent || time < buffer.front().time) {
 			return;
