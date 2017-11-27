@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "SignalBase.h"
+#include "CompositeSignal.h"
 #include "CppUnitTest.h"
 #include "MenticsCommonTest.h"
 #include <iostream>
@@ -63,6 +64,16 @@ namespace MenticsGame {
 			}
 
 			//LOG(lvl::info) << ;
+		}
+
+		TEST_METHOD(TestCompositSignal) {
+			CompositeSignal<EventKlass> cs(EventKlass(100));
+			cs.InsertEvent(2, EventKlass(200));
+			cs.InsertEvent(5, EventKlass(300));
+			auto e = cs.GetTimes(1,5);
+			Assert::AreEqual(2, (int)e.size());
+			Assert::AreEqual(300.0, e[0]);
+			Assert::AreEqual(200.0, e[1]);
 		}
 	};
 }

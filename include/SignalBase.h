@@ -25,8 +25,8 @@ namespace MenticsGame {
 		/// times are when that indexed event starts to be applicable. It ends at the next event.
 		std::vector<unsigned char> serializedTimes;
 		std::vector<unsigned char> serializedEvents;
-		int LatestIndex = 0;
 	public:
+		int LatestIndex = 0;
 		std::vector<C> Events;
 
 		SignalBase(C const& initial) : CanLog(std::string("SignalBase")), Times(MAX_EVENTS, std::numeric_limits<double>::quiet_NaN()), Events(MAX_EVENTS) {
