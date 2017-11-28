@@ -152,7 +152,9 @@
     <ClInclude Include="include\CompositeSignal.h" />
     <ClInclude Include="include\Scheduler.h" />
     <ClInclude Include="include\Resettable.h" />
+    <ClInclude Include="include\Signal.h" />
     <ClInclude Include="include\SignalBase.h" />
+    <ClInclude Include="include\SignalFunctions.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Scheduler.hpp" />

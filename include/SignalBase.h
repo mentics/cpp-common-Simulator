@@ -63,7 +63,7 @@ namespace MenticsGame {
 			Times[LatestIndex] = time;
 		}
 
-		virtual C& EventFor(double time) {
+		virtual C EventFor(double time) {
 			int find = LatestIndex;
 			// TODO: corner case (insert >50 events in short time) could cause this to be infinite loop
 			while (!std::isnan(Times[find]) && time < Times[find]) {

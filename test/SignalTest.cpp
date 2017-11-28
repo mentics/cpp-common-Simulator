@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "SignalBase.h"
+#include "Signal.h"
 #include "CompositeSignal.h"
+#include "SignalFunctions.h"
 #include "CppUnitTest.h"
 #include "MenticsCommonTest.h"
 #include <iostream>
@@ -74,6 +76,20 @@ namespace MenticsGame {
 			Assert::AreEqual(2, (int)e.size());
 			Assert::AreEqual(300.0, e[0]);
 			Assert::AreEqual(200.0, e[1]);
+		}
+
+		TEST_METHOD(TestSignal) {
+			auto initial = [](double time) -> EventKlass {
+				return time;
+			};
+			Signal<EventKlass> signal(initial);
+		}
+
+		TEST_METHOD(TestSignalFunction) {
+			EventKlass k;
+			auto initial = SignalFunctions::ConstantFunction<EventKlass>(k);
+			auto f = SignalFunctions::IncreasingFunction(10,20,5.5,8);
+			auto f2 = SignalFunctions::TransferEnergyFunction(10, 20, 4.5);
 		}
 	};
 }
