@@ -1,5 +1,5 @@
-#include <boost/circular_buffer.hpp>
-#include "MenticsCommon.h"
+#include "../../lib/readerwriterqueue/readerwriterqueue.h"
+#include "../../common/include/MenticsCommon.h"
 
 namespace MenticsGame {
 
@@ -30,7 +30,7 @@ namespace MenticsGame {
 		void walk(ChangeCallback<T,TimeType> const& callback);
 		friend ResettableTest;
 	protected:
-		boost::circular_buffer<Change<T,TimeType>> buffer;
+		ReaderWriterQueue<Change<T, TimeType>> buffer(100);
 		TimeType timeCurrent;
 		T stateOldest, stateCurrent;
 	};

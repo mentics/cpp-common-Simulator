@@ -29,7 +29,6 @@ namespace MenticsGame {
 
 	TEST_CLASS(ResettableTest)
 	{
-		boost::log::sources::severity_logger<boost::log::trivial::severity_level> lg;
 		const std::string name = "ResettableTest";
 
 	public:
@@ -62,6 +61,7 @@ namespace MenticsGame {
 		}
 
 		TEST_METHOD(TestResettableMoveOldest) {
+			const auto m_log = spdlog::stdout_logger_st("unique name");
 			Entity ent;
 			Resettable<Entity, Time> state(ent, 10);
 
@@ -99,7 +99,7 @@ namespace MenticsGame {
 			Assert::AreEqual(5, (int)state.buffer.size(),L"Buffer changed");
 
 			state.moveOldest(times.back());
-			LOG(lvl::info) << state.buffer.size();
+			m_log->info("{0}",state.buffer.size());
 			Assert::IsTrue(state.buffer.empty(),L"Buffer is not empty");
 			Assert::AreEqual(state.stateCurrent.value, state.stateOldest.value);
 		}

@@ -1,17 +1,18 @@
 //#include "stdafx.h"
 
 #include "Scheduler.h"
+#include <spdlog\spdlog.h>
 
 namespace MenticsGame {
 
 using namespace std::chrono_literals;
-namespace src = boost::log::sources;
-namespace lvl = boost::log::trivial;
+
 
 
 template <typename TimeType, typename Model>
 TimeType SchedulerModel<TimeType,Model>::processIncoming() {
-	LOG(lvl::trace) << "SchedulerModel::processIncoming";
+	const auto m_log = spdlog::stdout_logger_st("unique name");
+	m_log->trace("SchedulerModel::processIncoming");
 	// TODO: assert scheduler thread?
 	TimeType minTime = FOREVER;
 	EventUniquePtr<TimeType,Model> ev = uniquePtr<EventZero<TimeType,Model>>(); // TODO: simplify this?
@@ -74,7 +75,8 @@ void SchedulerModel<TimeType,Model>::consumeOutgoing(TimeType upToTime, std::fun
 // It loops forever and processes the events on the processing queue up to 
 template <typename TimeType, typename Model>
 void Scheduler<TimeType,Model>::run() {
-	LOG(lvl::trace) << "Scheduler::run";
+	const auto m_log = spdlog::stdout_logger_st("unique name");
+	m_log->trace("Scheduler::run");
 
 	while (true) {
 		TimeType nextTime = 0;
@@ -90,10 +92,10 @@ void Scheduler<TimeType,Model>::run() {
 			if (ev != NULL) {
 				nextTime = ev->timeToRun;
 				if (nextTime < now) {
-					LOG(lvl::warning) << "Event time prior to now, event processing can't keep up.";
+					m_log->warn("Event time prior to now, event processing can't keep up.");
 				}
 				if (nextTime < processedTime) {
-					LOG(lvl::error) << "Back in time processing";
+					m_log->error("Back in time processing");
 				}
 				processedTime = nextTime;
 				ev->run(schedModel, model);
@@ -105,7 +107,7 @@ void Scheduler<TimeType,Model>::run() {
 
 		if (!shouldStop) {
 			const chrono::nanoseconds sleepTime = timeProvider->realTimeUntil(nextTime);
-			LOG(boost::log::trivial::trace) << "Sleeping for " << sleepTime.count() << " ns";
+			m_log->trace("Sleeping for {0} ns", sleepTime.count());
 			{
 				std::unique_lock<std::mutex> lock(mtx);
 				wait.wait_for(lock, sleepTime);
@@ -114,7 +116,7 @@ void Scheduler<TimeType,Model>::run() {
 		else {
 			break;
 		}
-		LOG(boost::log::trivial::error) << "looping again...";
+		m_log->error("looping again...");
 	}
 }
 
@@ -128,11 +130,12 @@ void Scheduler<TimeType, Model>::reset(TimeType resetToTime) {
 
 template <typename TimeType, typename Model>
 void Scheduler<TimeType,Model>::stop() {
+	const auto m_log = spdlog::stdout_logger_st("unique name 1");
 	shouldStop = true;
-	LOG(boost::log::trivial::error) << "notifying...";
+	m_log->error("notifying...");
 	wait.notify_all();
 	if (theThread.joinable()) {
-		LOG(boost::log::trivial::error) << "joining...";
+		m_log->("joining...");
 		theThread.join();
 	}
 }
