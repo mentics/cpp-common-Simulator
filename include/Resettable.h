@@ -31,21 +31,17 @@ namespace MenticsGame {
 		void apply(Change<T,TimeType> const& change);
 		void moveOldest(TimeType const& time);
 		void reset(TimeType const& time);
-		void walk(ChangeCallback<T,TimeType> const& callback);
 		friend ResettableTest;
 	protected:
 		ReaderWriterQueue<Change<T, TimeType>> buffer;
-		TimeType timeCurrent;
+		TimeType timeCurrent, timeOldest;
 		T stateOldest, stateCurrent;
 	};
 
 	template<typename T,typename TimeType>
 	void Resettable<T, TimeType>::apply(Change<T, TimeType> const& change)
 	{
-		assert(change.time > timeCurrent);
-		if (buffer.) {
-			buffer.tailBlock.action(stateOldest);
-		}
+		assert(change.time >= timeCurrent);
 		change.action(stateCurrent);
 		buffer.enqueue(change);
 		timeCurrent = change.time;
@@ -54,41 +50,37 @@ namespace MenticsGame {
 	template<typename T, typename TimeType>
 	void Resettable<T, TimeType>::moveOldest(TimeType const& time)
 	{
+		assert(time < timeOldest);
 		if (time > timeCurrent) {
 			return;
 		}
-		auto first = std::find_if(&buffer.tailBlock(), &buffer.frontBlock(), [&](Change<T, TimeType> const& c) {
-			if (c.time <= time) {
-				c.action(stateOldest);
-				return false;
+
+		while(buffer.peek() != nullptr)
+		{
+			if (buffer.peek()->time >= time) {
+				buffer.peek()->action(stateOldest);
+				buffer.pop();
 			}
-			return true;
-		});
-		//buffer.(buffer.begin(), first);
+		}
 	}
 
-	template<typename T, typename TimeType>
-	void Resettable<T, TimeType>::walk(ChangeCallback<T,TimeType> const& callback)
-	{
-		std::find_if(buffer.begin(), buffer.end(), callback);
-	}
 
 	template<typename T, typename TimeType>
 	void Resettable<T, TimeType>::reset(TimeType const& time)
 	{
-		if (time > timeCurrent || time < buffer.frontBlock().time) {
+		assert(time < buffer.peek()->time);
+		if (time > timeCurrent) {
 			return;
 		}
 		stateCurrent = stateOldest;
-		walk([&](Change<T, TimeType> const &change)->bool {
-			if (change.time <= time) {
-				change.action(stateCurrent);
-				timeCurrent = change.time;
-				return false;
+		while(buffer.peek() != nullptr)
+		{
+			if (buffer.peek()->time <= time) {
+				buffer.peek()->action(stateCurrent);
+				buffer.pop();
 			}
-			return true;
-		});
-		stateOldest = stateCurrent;
-		buffer.clear();
+		}
+		timeCurrent = buffer.peek()->time;
+		
 	}
 }
