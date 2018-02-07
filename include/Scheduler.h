@@ -78,15 +78,16 @@ private:
 	std::deque<OutEventUniquePtr<TimeType>> outgoing;
 
 public:
+	
 	SchedulerModel(std::string name) : CanLog(name),
 		incoming(1024), processing(&Event<TimeType,Model>::compare) {}
 	~SchedulerModel() {
-		LOG(boost::log::trivial::error) << "SchedulerModel destructor";
+		m_log->error("SchedulerModel destructor");
 	}
 
 	// Runs on outside thread
 	void schedule(EventUniquePtr<TimeType,Model> ev) {
-		LOG(boost::log::trivial::trace) << "Scheduling event";
+		m_log->trace("Scheduling event");
 		incoming.enqueue(std::move(ev));
 	}
 
@@ -115,7 +116,7 @@ public:
 		processedTime(0) {}
 
 	~Scheduler() {
-		LOG(boost::log::trivial::error) << "Scheduler destructor";
+		m_log->error("Scheduler destructor");
 		stop();
 	}
 
@@ -123,7 +124,7 @@ public:
 
 	void schedule(EventUniquePtr<TimeType,Model> ev) {
 		schedModel->schedule(std::move(ev));
-		LOG(boost::log::trivial::trace) << "notifying...";
+		m_log->trace("notifying...");
 		wakeUp();
 	}
 

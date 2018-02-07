@@ -12,22 +12,21 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace MenticsGame {
 
-	class EventKlass {
+	class EventClass {
 	public:
-		EventKlass() : i(0) {};
-		EventKlass(int i) : i(i) {}
+		EventClass() : i(0) {};
+		EventClass(int i) : i(i) {}
 		int i;
-		friend std::ostream& operator<<(std::ostream &os, const EventKlass &e);
+		friend std::ostream& operator<<(std::ostream &os, const EventClass &e);
 	};
 
-	std::ostream& operator<<(std::ostream &os, const EventKlass &e) {
+	std::ostream& operator<<(std::ostream &os, const EventClass &e) {
 		os << e.i;
 		return os;
 	}
 
 	TEST_CLASS(SignalTest)
 	{
-		boost::log::sources::severity_logger<boost::log::trivial::severity_level> lg;
 		const std::string name = "SignalTest";
 
 	public:
@@ -36,21 +35,21 @@ namespace MenticsGame {
 		}
 
 		TEST_METHOD(TestSignalBase) {
-			SignalBase<EventKlass> signal(EventKlass(10));
+			SignalBase<EventClass> signal(EventClass(10));
 			Assert::AreEqual(0., signal.Times[0]);
 			Assert::IsTrue(std::isnan(signal.Times[MAX_EVENTS-1]));
 
 			Assert::IsTrue(signal.Events[0].i == 10);
 			Assert::IsTrue(signal.Events[1].i == 0);
 
-			signal.InsertEvent(10, EventKlass(100));			
+			signal.InsertEvent(10, EventClass(100));			
 			Assert::AreEqual(100, signal.Events[1].i);
 
 			auto &e = signal.EventFor(10);
 			Assert::IsTrue(e.i == 100);
 
 			{
-				signal.InsertEvent(20, EventKlass(200));
+				signal.InsertEvent(20, EventClass(200));
 				auto e = signal.EventsForRange(0, 20);
 				Assert::AreEqual(2, (int)e.size());
 				Assert::AreEqual(100, e[1].i);
@@ -69,9 +68,9 @@ namespace MenticsGame {
 		}
 
 		TEST_METHOD(TestCompositSignal) {
-			CompositeSignal<EventKlass> cs(EventKlass(100));
-			cs.InsertEvent(2, EventKlass(200));
-			cs.InsertEvent(5, EventKlass(300));
+			CompositeSignal<EventClass> cs(EventClass(100));
+			cs.InsertEvent(2, EventClass(200));
+			cs.InsertEvent(5, EventClass(300));
 			auto e = cs.GetTimes(1,5);
 			Assert::AreEqual(2, (int)e.size());
 			Assert::AreEqual(300.0, e[0]);
@@ -79,15 +78,15 @@ namespace MenticsGame {
 		}
 
 		TEST_METHOD(TestSignal) {
-			auto initial = [](double time) -> EventKlass {
+			auto initial = [](double time) -> EventClass {
 				return time;
 			};
-			Signal<EventKlass> signal(initial);
+			Signal<EventClass> signal(initial);
 		}
 
 		TEST_METHOD(TestSignalFunction) {
-			EventKlass k;
-			auto initial = SignalFunctions::ConstantFunction<EventKlass>(k);
+			EventClass k;
+			auto initial = SignalFunctions::ConstantFunction<EventClass>(k);
 			auto f = SignalFunctions::IncreasingFunction(10,20,5.5,8);
 			auto f2 = SignalFunctions::TransferEnergyFunction(10, 20, 4.5);
 		}

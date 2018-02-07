@@ -1,5 +1,9 @@
-#include "../../lib/readerwriterqueue/readerwriterqueue.h"
-#include "../../common/include/MenticsCommon.h"
+
+#include "MenticsCommon.h"
+#include "readerwriterqueue.h"
+
+
+using namespace moodycamel;
 
 namespace MenticsGame {
 
@@ -30,7 +34,7 @@ namespace MenticsGame {
 		void walk(ChangeCallback<T,TimeType> const& callback);
 		friend ResettableTest;
 	protected:
-		ReaderWriterQueue<Change<T, TimeType>> buffer(100);
+		ReaderWriterQueue<Change<T, TimeType>> buffer;
 		TimeType timeCurrent;
 		T stateOldest, stateCurrent;
 	};
@@ -39,11 +43,11 @@ namespace MenticsGame {
 	void Resettable<T, TimeType>::apply(Change<T, TimeType> const& change)
 	{
 		assert(change.time > timeCurrent);
-		if (buffer.full()) {
-			buffer.back().action(stateOldest);
+		if (buffer.) {
+			buffer.tailBlock.action(stateOldest);
 		}
 		change.action(stateCurrent);
-		buffer.push_back(change);
+		buffer.enqueue(change);
 		timeCurrent = change.time;
 	}
 
@@ -53,14 +57,14 @@ namespace MenticsGame {
 		if (time > timeCurrent) {
 			return;
 		}
-		auto first = std::find_if(buffer.begin(), buffer.end(), [&](Change<T, TimeType> const& c) {
+		auto first = std::find_if(&buffer.tailBlock(), &buffer.frontBlock(), [&](Change<T, TimeType> const& c) {
 			if (c.time <= time) {
 				c.action(stateOldest);
 				return false;
 			}
 			return true;
 		});
-		buffer.erase(buffer.begin(), first);
+		//buffer.(buffer.begin(), first);
 	}
 
 	template<typename T, typename TimeType>
@@ -72,7 +76,7 @@ namespace MenticsGame {
 	template<typename T, typename TimeType>
 	void Resettable<T, TimeType>::reset(TimeType const& time)
 	{
-		if (time > timeCurrent || time < buffer.front().time) {
+		if (time > timeCurrent || time < buffer.frontBlock().time) {
 			return;
 		}
 		stateCurrent = stateOldest;

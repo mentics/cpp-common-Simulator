@@ -49,6 +49,7 @@ public:
 	}
 
 	TEST_METHOD(TestScheduler) {
+		
 		TestTimeProvider timeProvider;
 		SchedulerModel<TimeType,TestModel> schedModel("SchedulerModel");
 		TestModel model;
@@ -58,9 +59,10 @@ public:
 		schedModel.schedule(uniquePtrC<Event<TimeType,TestModel>,TestEvent>(3, 3));
 		schedModel.schedule(uniquePtrC<Event<TimeType,TestModel>,TestEvent>(4, 4));
 		std::this_thread::sleep_for(100ms);
-		TimeType t = 1;
+		TimeType t = 1; 
+		
 		schedModel.consumeOutgoing(5, [&t, &sched](auto ev) {
-			BOOST_LOG_SEV(sched.lg, boost::log::trivial::trace) << "checking " << ev->occursAt;
+			sched.m_log->trace("checking {0}",ev->occursAt);
 
 			Assert::AreEqual(t, ev->occursAt);
 			t++;

@@ -135,7 +135,7 @@ void Scheduler<TimeType,Model>::stop() {
 	m_log->error("notifying...");
 	wait.notify_all();
 	if (theThread.joinable()) {
-		m_log->("joining...");
+		m_log->trace("joining...");
 		theThread.join();
 	}
 }
