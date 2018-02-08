@@ -88,6 +88,7 @@ namespace MenticsGame {
 			//Assert::AreEqual(5, (int)state.buffer.size());
 
 			Entity tmp = state.stateOldest;
+			
 			Assert::AreEqual(tmp.value, state.stateCurrent.value);
 
 			// Moving to time > current time leaves the buffer unchanged
