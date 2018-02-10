@@ -1,6 +1,7 @@
 
 #include "MenticsCommon.h"
 #include "readerwriterqueue.h"
+#include <vector>
 
 
 using namespace moodycamel;
@@ -42,25 +43,23 @@ namespace MenticsGame {
 	void Resettable<T, TimeType>::apply(Change<T, TimeType> const& change)
 	{
 		assert(change.time >= timeCurrent);
+		timeCurrent = change.time;
 		change.action(stateCurrent);
 		buffer.enqueue(change);
-		timeCurrent = change.time;
 	}
 
 	template<typename T, typename TimeType>
 	void Resettable<T, TimeType>::moveOldest(TimeType const& time)
 	{
-		assert(time < timeOldest);
+		assert(time >= timeOldest);
 		if (time > timeCurrent) {
+			// TODO: should we set time to timeCurrent? should we report/throw error?
 			return;
 		}
 
-		while(buffer.peek() != nullptr)
-		{
-			if (buffer.peek()->time >= time) {
-				buffer.peek()->action(stateOldest);
-				buffer.pop();
-			}
+		for (auto value = buffer.peek(); value->time <= time; value = buffer.peek()) {
+			value->action(stateOldest);
+			buffer.pop();
 		}
 	}
 
@@ -68,19 +67,22 @@ namespace MenticsGame {
 	template<typename T, typename TimeType>
 	void Resettable<T, TimeType>::reset(TimeType const& time)
 	{
-		assert(time < buffer.peek()->time);
 		if (time > timeCurrent) {
 			return;
 		}
-		stateCurrent = stateOldest;
-		while(buffer.peek() != nullptr)
-		{
-			if (buffer.peek()->time <= time) {
-				buffer.peek()->action(stateCurrent);
-				buffer.pop();
-			}
+		stateCurrent = stateOldest; // copy old state to current
+		std::vector<Change<T, TimeType>> temp; // TODO: optimize this
+		for (auto value = buffer.peek(); value->time <= time; value = buffer.peek()) {
+			value->action(stateCurrent);
+			temp.push_back(*value);
+			// TODO: we need a way to walk this without popping them off the buffer.
+			buffer.pop();
 		}
-		timeCurrent = buffer.peek()->time;
-		
+		// buffer.clear(); // TODO: we need to clear it one way or another
+		for (auto change : temp) {
+			buffer.enqueue(change);
+		}
+
+		timeCurrent = time;
 	}
 }
