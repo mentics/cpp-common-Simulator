@@ -140,4 +140,60 @@ void Scheduler<TimeType,Model>::stop() {
 	}
 }
 
+template<typename TimeType, typename Model>
+inline bool Event<TimeType, Model>::compare(const EventUniquePtr<TimeType, Model>& ev1, const EventUniquePtr<TimeType, Model>& ev2) {
+	return ev1->timeToRun > ev2->timeToRun;  
+}
+
+template <typename TimeType, typename Model>
+SchedulerModel<TimeType, Model>::~SchedulerModel() {
+	m_log->error("SchedulerModel destructor");
+}
+
+// Runs on outside thread
+template <typename TimeType, typename Model>
+void SchedulerModel<TimeType, Model>::schedule(EventUniquePtr<TimeType, Model> ev) {
+	m_log->trace("Scheduling event");
+	incoming.enqueue(std::move(ev));
+}
+
+template <typename TimeType, typename Model>
+void SchedulerModel<TimeType, Model>::addOutEvent(OutEventUniquePtr<TimeType> outEvent) {
+	outgoing.push_back(std::move(outEvent));
+}
+
+
+template <typename TimeType, typename Model>
+Scheduler<TimeType, Model>::Scheduler(std::string name, SchedulerModelPtr<TimeType, Model> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model) :
+	CanLog(name),
+	schedModel(schedModel), timeProvider(timeProvider), model(model),
+	theThread(&Scheduler<TimeType, Model>::run, this),
+	processedTime(0) {}
+
+template <typename TimeType, typename Model>
+Scheduler<TimeType, Model>::~Scheduler() {
+	m_log->error("Scheduler destructor");
+	stop();
+}
+
+template <typename TimeType, typename Model>
+void Scheduler<TimeType, Model>::schedule(EventUniquePtr<TimeType, Model> ev) {
+	schedModel->schedule(std::move(ev));
+	m_log->trace("notifying...");
+	wakeUp();
+}
+
+template <typename TimeType, typename Model>
+void Scheduler<TimeType, Model>::wakeUp() {
+	wait.notify_all();
+}
+
+// Only used for testing. TODO: untested
+template <typename TimeType, typename Model>
+void Scheduler<TimeType, Model>::WaitUntilProcessed(TimeType until) {
+	do {
+		Thread.Sleep(100);
+	} while (processedTime < until);
+}
+
 }

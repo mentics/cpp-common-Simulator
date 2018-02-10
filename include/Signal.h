@@ -16,9 +16,6 @@ namespace MenticsGame {
 	class Signal : public SignalBase<SignalFunction<A>> {
 	public:
 		Signal(SignalFunction<A> initial) : SignalBase<SignalFunction<A>>(initial) { }
-
-		virtual A At(double time) {
-			return EventFor(time)(time);
-		}
+		virtual A At(double time);
 	};
-}
+};
