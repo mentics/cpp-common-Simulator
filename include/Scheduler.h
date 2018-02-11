@@ -43,8 +43,13 @@ struct Event {
 	const TimeType created;
 	const TimeType timeToRun;
 
-	Event(const TimeType created, const TimeType timeToRun) : created(created), timeToRun(timeToRun) {}
-	static bool compare(const EventUniquePtr<TimeType, Model>& ev1, const EventUniquePtr<TimeType, Model>& ev2);
+	Event(const TimeType created, const TimeType timeToRun) : created(created), timeToRun(timeToRun) {
+	}
+
+	static bool compare(const EventUniquePtr<TimeType,Model>& ev1, const EventUniquePtr<TimeType,Model>& ev2) {
+		return ev1->timeToRun > ev2->timeToRun;
+	}
+
 	virtual void run(SchedulatorPtr<TimeType,Model> sched, nn::nn<Model*> model) = 0;
 };
 
@@ -76,16 +81,27 @@ public:
 	
 	SchedulerModel(std::string name) : CanLog(name),
 		incoming(1024), processing(&Event<TimeType,Model>::compare) {}
-	~SchedulerModel();
+	~SchedulerModel() {
+		m_log->error("SchedulerModel destructor");
+	}
+
 	// Runs on outside thread
-	void schedule(EventUniquePtr<TimeType, Model> ev);
+	void schedule(EventUniquePtr<TimeType,Model> ev) {
+		m_log->trace("Scheduling event");
+		incoming.enqueue(std::move(ev));
+	}
+
 	// Returns minimum timeToRun of ingested events
 	TimeType processIncoming();
 	void reset(TimeType toTime);
 	Event<TimeType,Model>* first(TimeType maxTime);
 	void completeFirst();
+
 	void consumeOutgoing(TimeType upToTime, std::function<void(OutEventPtr<TimeType>)> handler);
-	void addOutEvent(OutEventUniquePtr<TimeType> outEvent);
+
+	void addOutEvent(OutEventUniquePtr<TimeType> outEvent) {
+		outgoing.push_back(std::move(outEvent));
+	}
 };
 PTRS2(SchedulerModel, TimeType, Model)
 
@@ -93,15 +109,39 @@ PTRS2(SchedulerModel, TimeType, Model)
 template <typename TimeType, typename Model>
 class Scheduler : public CanLog {
 public:
-	Scheduler(std::string name, SchedulerModelPtr<TimeType, Model> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model);
-	~Scheduler();
+	Scheduler(std::string name, SchedulerModelPtr<TimeType,Model> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model) :
+		CanLog(name),
+		schedModel(schedModel), timeProvider(timeProvider), model(model),
+		theThread(&Scheduler<TimeType,Model>::run, this),
+		processedTime(0) {}
+
+	~Scheduler() {
+		m_log->error("Scheduler destructor");
+		stop();
+	}
+
 	void run();
-	void schedule(EventUniquePtr<TimeType, Model> ev);
-	void wakeUp();
+
+	void schedule(EventUniquePtr<TimeType,Model> ev) {
+		schedModel->schedule(std::move(ev));
+		m_log->trace("notifying...");
+		wakeUp();
+	}
+
+	void wakeUp() {
+		wait.notify_all();
+	}
+
 	void reset(TimeType resetToTime);
+
 	void stop();
+
 	// Only used for testing. TODO: untested
-	void WaitUntilProcessed(TimeType until);
+	void WaitUntilProcessed(TimeType until) {
+		do {
+			Thread.Sleep(100);
+		} while (processedTime < until);
+	}
 
 private:
 	SchedulerModelPtr<TimeType, Model> schedModel;
@@ -117,7 +157,5 @@ private:
 	TimeType processedTime;
 };
 PTRS2(Scheduler, TimeType, Model)
-
-
 
 }

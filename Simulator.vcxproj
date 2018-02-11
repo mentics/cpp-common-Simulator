@@ -152,6 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\CompositeSignal.h" />
+    <ClInclude Include="include\readerwriterqueue.h" />
     <ClInclude Include="include\Scheduler.h" />
     <ClInclude Include="include\Resettable.h" />
     <ClInclude Include="include\Signal.h" />
@@ -159,7 +160,7 @@
     <ClInclude Include="include\SignalFunctions.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Scheduler.cpp" />
+    <ClInclude Include="include\Scheduler.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\common\Common.vcxproj">
@@ -167,8 +168,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Signal.cpp" />
-    <ClCompile Include="src\SignalBase.cpp" />
     <ClCompile Include="src\Placeholder.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

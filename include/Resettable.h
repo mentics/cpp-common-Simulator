@@ -1,6 +1,6 @@
 
 #include "MenticsCommon.h"
-#include "readerwriterqueue.h"        
+#include "readerwriterqueue.h"
 #include <vector>
 
 
