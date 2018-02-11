@@ -17,7 +17,7 @@ namespace MenticsGame {
 
 		virtual std::vector<double> GetTimes(double fromTime, double toTime) {
 			std::vector<double> result;
-			int find = LatestIndex;
+			size_t find = LatestIndex;
 			while (Times[find] > fromTime && Times[find] < toTime) {
 				assert(!std::isnan(Times[find]));
 				result.push_back(Times[find]);

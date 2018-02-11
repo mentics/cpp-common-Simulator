@@ -62,7 +62,7 @@ public:
 		TimeType t = 1; 
 		
 		schedModel.consumeOutgoing(5, [&t, &sched](auto ev) {
-			sched.m_log->trace("checking {0}",ev->occursAt);
+			m_log->trace("checking {0}",ev->occursAt);
 
 			Assert::AreEqual(t, ev->occursAt);
 			t++;

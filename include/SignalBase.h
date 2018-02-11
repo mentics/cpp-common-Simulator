@@ -26,7 +26,7 @@ namespace MenticsGame {
 		std::vector<unsigned char> serializedTimes;
 		std::vector<unsigned char> serializedEvents;
 	public:
-		int LatestIndex = 0;
+		size_t LatestIndex = 0;
 		std::vector<C> Events;
 
 		SignalBase(C const& initial) : CanLog(std::string("SignalBase")), Times(MAX_EVENTS, std::numeric_limits<double>::quiet_NaN()), Events(MAX_EVENTS) {
@@ -64,7 +64,7 @@ namespace MenticsGame {
 		}
 
 		virtual C EventFor(double time) {
-			int find = LatestIndex;
+			size_t find = LatestIndex;
 			// TODO: corner case (insert >50 events in short time) could cause this to be infinite loop
 			while (!std::isnan(Times[find]) && time < Times[find]) {
 				find--;
@@ -108,7 +108,7 @@ namespace MenticsGame {
 		///// Note that it currently is inclusive on both ends: it will include events at exactly fromTime or toTime.
 		std::vector<C> EventsForRange(double fromTime, double toTime) {
 			std::vector<C> result;
-			int find = LatestIndex;
+			size_t find = LatestIndex;
 			// TODO: corner case (insert >50 events in short time) could cause this to be infinite loop
 			while (Times[find] != 0 && fromTime <= Times[find]) {
 				if (Times[find] <= toTime) {

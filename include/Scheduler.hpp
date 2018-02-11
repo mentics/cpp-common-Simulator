@@ -11,7 +11,6 @@ using namespace std::chrono_literals;
 
 template <typename TimeType, typename Model>
 TimeType SchedulerModel<TimeType,Model>::processIncoming() {
-	const auto m_log = spdlog::stdout_logger_st("unique name");
 	m_log->trace("SchedulerModel::processIncoming");
 	// TODO: assert scheduler thread?
 	TimeType minTime = FOREVER;
@@ -75,7 +74,6 @@ void SchedulerModel<TimeType,Model>::consumeOutgoing(TimeType upToTime, std::fun
 // It loops forever and processes the events on the processing queue up to 
 template <typename TimeType, typename Model>
 void Scheduler<TimeType,Model>::run() {
-	const auto m_log = spdlog::stdout_logger_st("unique name");
 	m_log->trace("Scheduler::run");
 
 	while (true) {
@@ -130,7 +128,6 @@ void Scheduler<TimeType, Model>::reset(TimeType resetToTime) {
 
 template <typename TimeType, typename Model>
 void Scheduler<TimeType,Model>::stop() {
-	const auto m_log = spdlog::stdout_logger_st("unique name 1");
 	shouldStop = true;
 	m_log->error("notifying...");
 	wait.notify_all();
