@@ -1,8 +1,9 @@
 ﻿#pragma once
 
 #include "SignalBase.h"
-#include <vector>
-#include <cmath>
+
+template <typename T> class vector;
+
 //#include <type_traits>
 
 namespace MenticsGame {

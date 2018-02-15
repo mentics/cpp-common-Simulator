@@ -1,7 +1,9 @@
 
 #include "MenticsCommon.h"
 #include "readerwriterqueue.h"
-#include <vector>
+
+template <typename T> class vector;
+
 
 
 using namespace moodycamel;

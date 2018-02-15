@@ -1,8 +1,6 @@
 ﻿#pragma once
 
-#include <string>
-#include <vector>
-#include <cmath>
+
 #include "MenticsCommon.h"
 
 #define MAX_EVENTS 5000

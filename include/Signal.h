@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "SignalBase.h"
 #include "SignalFunctions.h"
-#include <functional>
+
 
 namespace MenticsGame {
 	/// Signal represents a time varying value that we can query at a specific time.
