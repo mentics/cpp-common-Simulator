@@ -3,10 +3,10 @@
 #include "Scheduler.h"
 #include <spdlog\spdlog.h>
 
-namespace MenticsGame {
 
 using namespace std::chrono_literals;
 
+namespace MenticsGame {
 
 
 template <typename TimeType, typename Model>
