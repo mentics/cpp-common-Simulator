@@ -21,8 +21,7 @@ namespace MenticsGame {
 	private:
 		friend SignalTest;
 		/// times are when that indexed event starts to be applicable. It ends at the next event.
-		std::vector<unsigned char> serializedTimes;
-		std::vector<unsigned char> serializedEvents;
+		
 	public:
 		size_t LatestIndex = 0;
 		std::vector<C> Events;
