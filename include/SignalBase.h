@@ -12,7 +12,7 @@ namespace MenticsGame {
 	/// TODO: lots of opportunity to optimize
 
 	template<typename C>
-	class SignalBase : public CanLog {
+	class SignalBase  {
 	protected:
 		std::vector<double> Times;
 	// C# TO C++ CONVERTER TODO TASK: This event cannot be converted to C++:
@@ -27,7 +27,7 @@ namespace MenticsGame {
 		size_t LatestIndex = 0;
 		std::vector<C> Events;
 
-		SignalBase(C const& initial) : CanLog(std::string("SignalBase")), Times(MAX_EVENTS, std::numeric_limits<double>::quiet_NaN()), Events(MAX_EVENTS) {
+		SignalBase(C const& initial) : Times(MAX_EVENTS, std::numeric_limits<double>::quiet_NaN()), Events(MAX_EVENTS) {
 			// TODO Is assert required?
 			// assert(initial != nullptr);
 			// There must be an initial because there must always have been a value.

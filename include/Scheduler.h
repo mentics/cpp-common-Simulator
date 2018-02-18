@@ -66,7 +66,7 @@ struct OutEvent {
 
 
 template <typename TimeType, typename Model>
-class SchedulerModel : public CanLog, public Schedulator<TimeType, Model> {
+class SchedulerModel : public Schedulator<TimeType, Model> {
 private:
 	moodycamel::ConcurrentQueue<EventUniquePtr<TimeType,Model>> incoming;
 	PriorityQueue<EventUniquePtr<TimeType,Model>, decltype(&Event<TimeType,Model>::compare)> processing;
@@ -75,7 +75,7 @@ private:
 
 public:
 	
-	SchedulerModel(std::string name) : CanLog(name),
+	SchedulerModel(std::string name) : 
 		incoming(1024), processing(&Event<TimeType,Model>::compare) {}
 	~SchedulerModel() {
 		m_log->error("SchedulerModel destructor");
@@ -103,10 +103,9 @@ PTRS2(SchedulerModel, TimeType, Model)
 
 
 template <typename TimeType, typename Model>
-class Scheduler : public CanLog {
+class Scheduler  {
 public:
 	Scheduler(std::string name, SchedulerModelPtr<TimeType,Model> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model) :
-		CanLog(name),
 		schedModel(schedModel), timeProvider(timeProvider), model(model),
 		theThread(&Scheduler<TimeType,Model>::run, this),
 		processedTime(0) {}

@@ -10,8 +10,8 @@ template <typename T> class vector;
 using namespace moodycamel;
 
 namespace MenticsGame {
-	
-		//template<typename T> using Action = std::function<void(T&)>;
+	/*
+		template<typename T> using Action = std::function<void(T&)>;
 
 		template<typename T,typename TimeType>
 		struct Change {
@@ -19,7 +19,7 @@ namespace MenticsGame {
 			TimeType time;
 			Action<T> action;
 		};
-		/*
+
 		template<typename T, typename TimeType> using ChangeCallback = std::function<bool (Change<T,TimeType> const&)>;
 
 		class ResettableTest;
@@ -92,7 +92,6 @@ namespace MenticsGame {
 	*/
 
 
-#include <queue>
 	class Action
 	{
 		virtual void apply() = 0;
@@ -112,7 +111,7 @@ namespace MenticsGame {
 		}
 	};
 
-	template <typename TimeType, typename T, typename Collection, typename AddFunc, typename DelFunc>
+	template <typename TimeType, typename T, typename CollectionT, CollectionT* CollectionPTR, typename AddFunc, typename DelFunc>
 	class DeleteItem : Action
 	{
 		TimeType at;
@@ -127,7 +126,7 @@ namespace MenticsGame {
 	};
 
 
-	template <typename TimeType, typename T, typename Collection, typename AddFunc, typename DelFunc>
+	template <typename TimeType, typename T, typename CollectionT, CollectionT* CollectionPTR,typename AddFunc, typename DelFunc>
 	class AddItem : Action
 	{
 		TimeType at;
