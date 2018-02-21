@@ -11,7 +11,7 @@ namespace MenticsGame {
 
 template <typename TimeType, typename Model>
 TimeType SchedulerModel<TimeType,Model>::processIncoming() {
-	m_log->trace("SchedulerModel::processIncoming");
+	log->trace("SchedulerModel::processIncoming");
 	// TODO: assert scheduler thread?
 	TimeType minTime = FOREVER;
 	EventUniquePtr<TimeType,Model> ev = uniquePtr<EventZero<TimeType,Model>>(); // TODO: simplify this?
@@ -74,7 +74,7 @@ void SchedulerModel<TimeType,Model>::consumeOutgoing(TimeType upToTime, std::fun
 // It loops forever and processes the events on the processing queue up to 
 template <typename TimeType, typename Model>
 void Scheduler<TimeType,Model>::run() {
-	m_log->trace("Scheduler::run");
+	log->trace("Scheduler::run");
 
 	while (true) {
 		TimeType nextTime = 0;
@@ -90,10 +90,10 @@ void Scheduler<TimeType,Model>::run() {
 			if (ev != NULL) {
 				nextTime = ev->timeToRun;
 				if (nextTime < now) {
-					m_log->warn("Event time prior to now, event processing can't keep up.");
+					log->warn("Event time prior to now, event processing can't keep up.");
 				}
 				if (nextTime < processedTime) {
-					m_log->error("Back in time processing");
+					log->error("Back in time processing");
 				}
 				processedTime = nextTime;
 				ev->run(schedModel, model);
@@ -105,7 +105,7 @@ void Scheduler<TimeType,Model>::run() {
 
 		if (!shouldStop) {
 			const chrono::nanoseconds sleepTime = timeProvider->realTimeUntil(nextTime);
-			m_log->trace("Sleeping for {0} ns", sleepTime.count());
+			log->trace("Sleeping for {0} ns", sleepTime.count());
 			{
 				std::unique_lock<std::mutex> lock(mtx);
 				wait.wait_for(lock, sleepTime);
@@ -114,7 +114,7 @@ void Scheduler<TimeType,Model>::run() {
 		else {
 			break;
 		}
-		m_log->error("looping again...");
+		log->error("looping again...");
 	}
 }
 
@@ -129,10 +129,10 @@ void Scheduler<TimeType, Model>::reset(TimeType resetToTime) {
 template <typename TimeType, typename Model>
 void Scheduler<TimeType,Model>::stop() {
 	shouldStop = true;
-	m_log->error("notifying...");
+	log->error("notifying...");
 	wait.notify_all();
 	if (theThread.joinable()) {
-		m_log->trace("joining...");
+		log->trace("joining...");
 		theThread.join();
 	}
 }

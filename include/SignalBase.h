@@ -54,7 +54,7 @@ namespace MenticsGame {
 			}
 			if (LatestIndex >= MAX_EVENTS - 2) {
 				// TODO LZU output this class when ToString is ported
-				m_log->error("** OVERFLOW ** too many events in ...");
+				log->error("** OVERFLOW ** too many events in ...");
 			}
 			Events[LatestIndex] = ev;
 			Times[LatestIndex] = time;

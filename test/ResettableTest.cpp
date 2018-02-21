@@ -23,6 +23,7 @@ namespace MenticsGame {
 		Entity() : value(0) {}
 		int value;
 	};
+
 	bool operator==(Entity const& a, Entity const &b) {
 		return a.value == b.value;
 	}
@@ -37,35 +38,30 @@ namespace MenticsGame {
 		}
 
 		TEST_METHOD(TestResettableReset) {
-			Entity ent;
-			ent.value = 1;
+			std::vector<Entity> v;
+			std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
+			Resettable<std::chrono::system_clock::time_point> R;
 
-			std::queue <Entity> q;
-			q.push(ent);
-			Resettable<Time, Entity, std::queue<Entity> , &q, push , pop > state(ent, 10);
+			for (int i = 1; i <= 5; i++) 
+			{
+				Entity tmp;
+				tmp.value = i;
+		
+				R.addItem(std::chrono::system_clock::now(), &v, tmp);
 
-			auto before = std::chrono::system_clock::now();
-
-			std::vector<Time> times;
-			for (int i = 0; i < 10; ++i) {
-				Time now = std::chrono::system_clock::now();
-				times.push_back(now);
-				state.apply(Change<Entity, Time>([](Entity &e) {
-					e.value = e.value * 2;
-				},now));
+				
 			}
 
-			state.reset(before);
-			//Assert::AreEqual(10, (int)state.buffer.size(), L"Cannot be reset to older than the oldest state");
+			R.reset(t);
+			for(int i = 0; i < 5; i++)
+			{
+				if (!v.empty())
+				Logger::WriteMessage("there is a v");
+			}
 
-			state.reset(std::chrono::system_clock::now());
-			//Assert::AreEqual(10, (int)state.buffer.size(), L"Cannot be reset to newer than the current state");
 			
-			state.reset(times.at(4));
-			Assert::IsTrue(state.buffer.peek() == nullptr);
-			Assert::AreEqual(32, state.stateCurrent.value);
-			Assert::IsTrue(state.stateCurrent == state.stateOldest);
-			Assert::IsTrue(state.timeCurrent == times.at(4));
+
+			
 		}
 	};
 }

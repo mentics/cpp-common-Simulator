@@ -8,7 +8,7 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std::chrono_literals;
 
-namespace mentics { namespace scheduler {
+namespace MenticsGame { namespace scheduler {
 
 typedef uint64_t TimeType;
 

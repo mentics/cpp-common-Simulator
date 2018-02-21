@@ -78,12 +78,12 @@ public:
 	SchedulerModel(std::string name) : 
 		incoming(1024), processing(&Event<TimeType,Model>::compare) {}
 	~SchedulerModel() {
-		m_log->error("SchedulerModel destructor");
+		log->error("SchedulerModel destructor");
 	}
 
 	// Runs on outside thread
 	void schedule(EventUniquePtr<TimeType,Model> ev) {
-		m_log->trace("Scheduling event");
+		log->trace("Scheduling event");
 		incoming.enqueue(std::move(ev));
 	}
 
@@ -111,7 +111,7 @@ public:
 		processedTime(0) {}
 
 	~Scheduler() {
-		m_log->error("Scheduler destructor");
+		log->error("Scheduler destructor");
 		stop();
 	}
 
@@ -119,7 +119,7 @@ public:
 
 	void schedule(EventUniquePtr<TimeType,Model> ev) {
 		schedModel->schedule(std::move(ev));
-		m_log->trace("notifying...");
+		log->trace("notifying...");
 		wakeUp();
 	}
 

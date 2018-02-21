@@ -1,6 +1,7 @@
 
 #include "MenticsCommon.h"
 #include "readerwriterqueue.h"
+#include <queue>
 
 template <typename T> class queue;
 template <typename T> class vector;
@@ -91,14 +92,28 @@ namespace MenticsGame {
 	}
 	*/
 
+	template <typename T>
+	void changeVal(std::vector<T>* a, T v)
+	{
+		a->push_back(v);
+	}
 
+	template<typename T>
+	void deleteVal(std::vector<T>* a, int v) 
+	{
+		a->erase(a->begin() + v);
+	}
+	
+	template <typename TimeType>
 	class Action
 	{
+	public:
+		TimeType at;
 		virtual void apply() = 0;
 	};
 
-	template <typename TimeType, typename T, typename Collection, typename AddFunc, typename DelFunc>
-	class ChangeValue : Action
+	template <typename TimeType, typename CollectionT, typename T>
+	class ChangeValue : public Action<TimeType>
 	{
 		TimeType at;
 		T value;
@@ -111,69 +126,79 @@ namespace MenticsGame {
 		}
 	};
 
-	template <typename TimeType, typename T, typename CollectionT, CollectionT* CollectionPTR, typename AddFunc, typename DelFunc>
-	class DeleteItem : Action
+	template <typename TimeType, typename CollectionT, typename T>
+	class DeleteItem : public Action<TimeType>
 	{
 		TimeType at;
 		T value;
-		Collection ptr;
+		CollectionT* ptr;
 	public:
-		DeleteItem(TimeType at, Collection collection, T newItem) : at(at), ptr(collection), value(newItem) {}
+		DeleteItem(TimeType at, CollectionT* collection, T newItem) : at(at), ptr(collection), value(newItem) {}
 		void apply()
 		{
-			*ptr.DelFunc(value);
+			ptr->erase(ptr->begin() + value);
 		}
 	};
 
 
-	template <typename TimeType, typename T, typename CollectionT, CollectionT* CollectionPTR,typename AddFunc, typename DelFunc>
-	class AddItem : Action
+	template <typename TimeType, typename CollectionT, typename T>
+	class AddItem : public Action<TimeType>
 	{
 		TimeType at;
 		T value;
-		Collection ptr;
+		CollectionT* ptr;
 	public:
-		AddItem(TimeType at, Collection ptr, T existingValue) : at(at), ptr(ptr), value(existingValue) {}
+		AddItem(TimeType at, CollectionT* ptr, T existingValue) : at(at), ptr(ptr), value(existingValue) {}
 		void apply()
 		{
-			*ptr.AddFunc(value);
+			changeVal(ptr, value);
 		}
 	};
 
-	template <typename TimeType, typename T, typename Collection, typename AddFunc, typename DelFunc>
+	
+	template <typename TimeType>
 	class Resettable
 	{
-		queue<Action> undoActions;
+		std::queue<std::unique_ptr<Action<TimeType>>> undoActions;
 	public:
-		void changeValue(TimeType at, T* ptr, const T& value)
+		  
+		template <typename T> 
+		void changeValue(TimeType at, T* ptr, const T value)
 		{
-			ChangeValue<TimeType, T, typename Collection, AddFunc, DelFunc> cv(at, ptr, *ptr);
-			undoActions.emplace(cv);
+			using temp_args = ChangeItem<TimeType, std::vector<T>, T>;
+			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, ptr, value);
+			undoActions.push(std::move(p));
 			*ptr = value;
 		}
 
-		void addItem(TimeType at, T collection, T newItem)
+		template <typename T> 
+		void addItem(TimeType at, std::vector<T>* collection, T newItem)
 		{
-			DeleteItem<TimeType, T, typename Collection, AddFunc, DelFunc> di(at, collection, newItem);
-			undoActions.emplace(di);
-			collection.Func(newItem);
+			using temp_args = DeleteItem<TimeType, std::vector<T>, int>;
+			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, collection->size() - 1); 
+			undoActions.push(std::move(p)); 
+			changeVal(collection, newItem);
 		}
 
-		void deleteItem(TimeType at, T collection, T doomedItem)
+		template <typename T, typename K>
+		void deleteItem(TimeType at, std::vector<T>* collection, K key)
 		{
-			AddItem<TimeType, T, typename Collection, AddFunc, DelFunc> ai(at, collection, doomedItem);
-			undoActions.emplace(ai);
-			collection.DelFunc(doomedItem);
+			using temp_args = AddItem<TimeType, std::vector<T>, T>;
+			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, collection->at(key));
+			undoActions.push(std::move(p));
+			deleteVal(collection, key);
 		}
 
 		void reset(TimeType to)
 		{
-			while (to > undoActions.front().at)
+			while (to > undoActions.front().get()->at)
 			{
-				undoActions.front().apply();
+				undoActions.front().get()->apply();
 				undoActions.pop();
 			}
 		}
 	};
+
+	
 
 }
