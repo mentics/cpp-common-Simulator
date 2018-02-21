@@ -93,21 +93,25 @@ namespace MenticsGame {
 	*/
 
 	template <typename T>
-	void changeVal(std::vector<T>* a, T v)
+	int addVal(std::vector<T>* a, T v)
 	{
 		a->push_back(v);
+		return a->size() - 1;
 	}
 
 	template<typename T>
-	void deleteVal(std::vector<T>* a, int v) 
+	T deleteVal(std::vector<T>* a, int v) 
 	{
+		auto tmp = a->at(v);
 		a->erase(a->begin() + v);
+		return tmp;
 	}
 	
 	template <typename TimeType>
 	class Action
 	{
 	public:
+		Action(TimeType t) : at(t) {}
 		TimeType at;
 		virtual void apply() = 0;
 	};
@@ -115,28 +119,26 @@ namespace MenticsGame {
 	template <typename TimeType, typename CollectionT, typename T>
 	class ChangeValue : public Action<TimeType>
 	{
-		TimeType at;
 		T value;
 		T* ptr;
 	public:
-		ChangeValue(TimeType at, T ptr, T existingValue) : at(at), ptr(ptr), value(existingValue) {}
+		ChangeValue(TimeType at, T ptr, T existingValue) : Action(at), ptr(ptr), value(existingValue) {}
 		void apply()
 		{
 			*ptr = value;
 		}
 	};
 
-	template <typename TimeType, typename CollectionT, typename T>
+	template <typename TimeType, typename CollectionT, typename Key>
 	class DeleteItem : public Action<TimeType>
 	{
-		TimeType at;
-		T value;
+		Key delKey;
 		CollectionT* ptr;
 	public:
-		DeleteItem(TimeType at, CollectionT* collection, T newItem) : at(at), ptr(collection), value(newItem) {}
+		DeleteItem(TimeType at, CollectionT* collection, Key delKey) : Action(at), ptr(collection), delKey(delKey) {}
 		void apply()
 		{
-			ptr->erase(ptr->begin() + value);
+			deleteVal(ptr, delKey);
 		}
 	};
 
@@ -148,10 +150,10 @@ namespace MenticsGame {
 		T value;
 		CollectionT* ptr;
 	public:
-		AddItem(TimeType at, CollectionT* ptr, T existingValue) : at(at), ptr(ptr), value(existingValue) {}
+		AddItem(TimeType at, CollectionT* ptr, T existingValue) : Action(at), ptr(ptr), value(existingValue) {}
 		void apply()
 		{
-			changeVal(ptr, value);
+			addVal(ptr, value);
 		}
 	};
 
@@ -175,18 +177,21 @@ namespace MenticsGame {
 		void addItem(TimeType at, std::vector<T>* collection, T newItem)
 		{
 			using temp_args = DeleteItem<TimeType, std::vector<T>, int>;
-			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, collection->size() - 1); 
+			int key = addVal(collection, newItem);
+			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, key); 
 			undoActions.push(std::move(p)); 
-			changeVal(collection, newItem);
+			addVal(collection, newItem);
 		}
 
 		template <typename T, typename K>
 		void deleteItem(TimeType at, std::vector<T>* collection, K key)
 		{
 			using temp_args = AddItem<TimeType, std::vector<T>, T>;
-			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, collection->at(key));
+
+			T obj = deleteVal(collection, key);
+			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, obj);
 			undoActions.push(std::move(p));
-			deleteVal(collection, key);
+			
 		}
 
 		void reset(TimeType to)

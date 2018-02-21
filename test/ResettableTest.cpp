@@ -38,6 +38,7 @@ namespace MenticsGame {
 		}
 
 		TEST_METHOD(TestResettableReset) {
+			auto m_log = spdlog::stdout_logger_st("a");
 			std::vector<Entity> v;
 			std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
 			Resettable<std::chrono::system_clock::time_point> R;
@@ -48,15 +49,19 @@ namespace MenticsGame {
 				tmp.value = i;
 		
 				R.addItem(std::chrono::system_clock::now(), &v, tmp);
-
+				if (v[0] == tmp) Logger::WriteMessage("YEP");
+				//log->trace("something")    wont work
+				m_log->trace("something");
+				R.deleteItem(std::chrono::system_clock::now(), &v, v.size()-1);
 				
 			}
+
 
 			R.reset(t);
 			for(int i = 0; i < 5; i++)
 			{
 				if (!v.empty())
-				Logger::WriteMessage("there is a v");
+				
 			}
 
 			
