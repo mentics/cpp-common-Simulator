@@ -1,3 +1,4 @@
+#pragma once
 
 #include "MenticsCommon.h"
 #include "readerwriterqueue.h"

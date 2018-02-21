@@ -30,7 +30,7 @@ namespace MenticsGame {
 
 	TEST_CLASS(ResettableTest)
 	{
-		const std::string name = "ResettableTest";
+		//const std::string name = "ResettableTest";
 
 	public:
 		TEST_CLASS_INITIALIZE(BeforeClass) {
@@ -38,10 +38,14 @@ namespace MenticsGame {
 		}
 
 		TEST_METHOD(TestResettableReset) {
-			auto m_log = spdlog::stdout_logger_st("a");
+			setupLog();
+			log->error("test");
+			log->error("something");
+			//auto m_log = spdlog::stdout_logger_st("a");
 			std::vector<Entity> v;
 			std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
 			Resettable<std::chrono::system_clock::time_point> R;
+
 
 			for (int i = 1; i <= 5; i++) 
 			{
@@ -51,18 +55,17 @@ namespace MenticsGame {
 				R.addItem(std::chrono::system_clock::now(), &v, tmp);
 				if (v[0] == tmp) Logger::WriteMessage("YEP");
 				//log->trace("something")    wont work
-				m_log->trace("something");
 				R.deleteItem(std::chrono::system_clock::now(), &v, v.size()-1);
 				
 			}
 
 
-			R.reset(t);
-			for(int i = 0; i < 5; i++)
-			{
-				if (!v.empty())
-				
-			}
+			//R.reset(t);
+			//for(int i = 0; i < 5; i++)
+			//{
+			//	if (!v.empty())
+			//	
+			//}
 
 			
 
