@@ -2,7 +2,7 @@
 
 #include "MenticsCommon.h"
 #include "readerwriterqueue.h"
-#include <queue>
+#include <deque>
 
 
 template <typename T> class queue;
@@ -16,7 +16,7 @@ namespace MenticsGame {
 	
 
 	template <typename T>
-	int addVal(std::vector<T>* a, T v)
+	size_t addVal(std::vector<T>* a, T v)
 	{
 		a->push_back(v);
 		return a->size() - 1;
@@ -46,7 +46,7 @@ namespace MenticsGame {
 		T value;
 		T* ptr;
 	public:
-		ChangeValue(TimeType at, T ptr, T existingValue) : Action(at), ptr(ptr), value(existingValue) {}
+		ChangeValue(TimeType at, T* ptr, T existingValue) : Action(at), ptr(ptr), value(existingValue) {}
 		void apply()
 		{
 			*ptr = value;
@@ -84,25 +84,25 @@ namespace MenticsGame {
 	template <typename TimeType>
 	class Resettable
 	{
-		std::queue<std::unique_ptr<Action<TimeType>>> undoActions;
+		std::deque<std::unique_ptr<Action<TimeType>>> undoActions;
 	public:
 		  
 		template <typename T> 
 		void changeValue(TimeType at, T* ptr, const T value)
 		{
-			using temp_args = ChangeItem<TimeType, std::vector<T>, T>;
-			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, ptr, value);
-			undoActions.push(std::move(p));
+			using temp_args = ChangeValue<TimeType, T*, T>;
+			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, ptr, *ptr);
+			undoActions.push_back(std::move(p));
 			*ptr = value;
 		}
 
 		template <typename T> 
 		void addItem(TimeType at, std::vector<T>* collection, T newItem)
 		{
-			using temp_args = DeleteItem<TimeType, std::vector<T>, int>;
-			int key = addVal(collection, newItem);
+			using temp_args = DeleteItem<TimeType, std::vector<T>, size_t>;
+			size_t key = addVal(collection, newItem);
 			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, key); 
-			undoActions.push(std::move(p)); 
+			undoActions.push_back(std::move(p)); 
 		}
 
 		template <typename T, typename K>
@@ -112,16 +112,15 @@ namespace MenticsGame {
 
 			T obj = deleteVal(collection, key);
 			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, obj);
-			undoActions.push(std::move(p));
-			
+			undoActions.push_back(std::move(p));
 		}
 
 		void reset(TimeType to)
 		{
-			while (  (!undoActions.empty()) && to < undoActions.front()->at)
+			while (  (!undoActions.empty()) && to <= undoActions.back()->at)
 			{
-				undoActions.front()->apply();
-				undoActions.pop();
+				undoActions.back()->apply();
+				undoActions.pop_back();
 			}
 		}
 	};

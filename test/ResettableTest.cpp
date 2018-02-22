@@ -40,27 +40,39 @@ namespace MenticsGame {
 		TEST_METHOD(TestResettableReset) {
 			setupLog();
 			std::vector<Entity> v;
-			Resettable<std::chrono::system_clock::time_point> R;
+			Resettable<uint64_t> R;
 
 
-			for (int i = 1; i <= 5; i++) 
-			{
-				Entity tmp;
-				tmp.value = i;
-		
-				R.addItem(std::chrono::system_clock::now(), &v, tmp);
-				if (v.back() == tmp) log->info("matches {0}",tmp.value);
-				else log->info("NO match {0}", i);
-			}
-			std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
-			R.deleteItem(std::chrono::system_clock::now(), &v, 0);
-			R.deleteItem(std::chrono::system_clock::now(), &v, 3);
+			Entity e;
+			e.value = 5555;
 
-			for (Entity e : v)log->info("after del : {0} ", e.value);
-
-			R.reset(t);
+			R.addItem(1, &v, e);
+			R.changeValue(2, &e.value, 4444);
+			R.addItem(2, &v, e);
+			R.changeValue(2, &e.value, 3333);
+			R.addItem(2, &v, e);
+			R.deleteItem(3, &v, 2);
+			R.deleteItem(3, &v, 1);
 			
-			if (!v.empty())log->info("size : {0}", v.size()); // should be 0
+			R.reset(2);
+			
+			if(e.value != v[0].value)
+			{
+				log->info("Entity {0} vector {1}", e.value, v[0].value);
+				Assert::Fail(L"Fisrt Entity object value does not match vecotr [0] value ");
+			}
+			
+
+			R.reset(0);
+
+			
+			for (Entity s : v)log->info("val : {0}", s.value);
+
+			if (!v.empty())
+			{
+				log->error("size : {0} should be 0", v.size());
+				Assert::Fail(L"size of vector should be 0");
+			};
 
 			
 
