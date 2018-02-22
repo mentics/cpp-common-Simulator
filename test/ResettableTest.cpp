@@ -39,11 +39,7 @@ namespace MenticsGame {
 
 		TEST_METHOD(TestResettableReset) {
 			setupLog();
-			log->error("test");
-			log->error("something");
-			//auto m_log = spdlog::stdout_logger_st("a");
 			std::vector<Entity> v;
-			std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
 			Resettable<std::chrono::system_clock::time_point> R;
 
 
@@ -53,19 +49,18 @@ namespace MenticsGame {
 				tmp.value = i;
 		
 				R.addItem(std::chrono::system_clock::now(), &v, tmp);
-				if (v[0] == tmp) Logger::WriteMessage("YEP");
-				//log->trace("something")    wont work
-				R.deleteItem(std::chrono::system_clock::now(), &v, v.size()-1);
-				
+				if (v.back() == tmp) log->info("matches {0}",tmp.value);
+				else log->info("NO match {0}", i);
 			}
+			std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
+			R.deleteItem(std::chrono::system_clock::now(), &v, 0);
+			R.deleteItem(std::chrono::system_clock::now(), &v, 3);
 
+			for (Entity e : v)log->info("after del : {0} ", e.value);
 
-			//R.reset(t);
-			//for(int i = 0; i < 5; i++)
-			//{
-			//	if (!v.empty())
-			//	
-			//}
+			R.reset(t);
+			
+			if (!v.empty())log->info("size : {0}", v.size()); // should be 0
 
 			
 
