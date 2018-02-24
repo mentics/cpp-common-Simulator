@@ -2,6 +2,7 @@
 
 
 #include "MenticsCommon.h"
+#include "MenticsCommonTest.h"
 
 #define MAX_EVENTS 5000
 
@@ -26,6 +27,7 @@ namespace MenticsGame {
 		size_t LatestIndex = 0;
 		std::vector<C> Events;
 
+		SignalBase();
 		SignalBase(C const& initial) : Times(MAX_EVENTS, std::numeric_limits<double>::quiet_NaN()), Events(MAX_EVENTS) {
 			// TODO Is assert required?
 			// assert(initial != nullptr);

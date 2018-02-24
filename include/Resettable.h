@@ -40,7 +40,7 @@ namespace MenticsGame {
 		virtual void apply() = 0;
 	};
 
-	template <typename TimeType, typename CollectionT, typename T>
+	template <typename CollectionT, typename T, typename TimeType = TimePoint>
 	class ChangeValue : public Action<TimeType>
 	{
 		T value;
@@ -53,7 +53,7 @@ namespace MenticsGame {
 		}
 	};
 
-	template <typename TimeType, typename CollectionT, typename Key>
+	template <typename CollectionT, typename Key, typename TimeType = TimePoint>
 	class DeleteItem : public Action<TimeType>
 	{
 		Key delKey;
@@ -67,7 +67,7 @@ namespace MenticsGame {
 	};
 
 
-	template <typename TimeType, typename CollectionT, typename T>
+	template <typename CollectionT, typename T, typename TimeType = TimePoint>
 	class AddItem : public Action<TimeType>
 	{
 		T value;
@@ -81,7 +81,7 @@ namespace MenticsGame {
 	};
 
 	
-	template <typename TimeType>
+	template <typename TimeType = TimePoint>
 	class Resettable
 	{
 		std::deque<std::unique_ptr<Action<TimeType>>> undoActions;
@@ -90,7 +90,7 @@ namespace MenticsGame {
 		template <typename T> 
 		void changeValue(TimeType at, T* ptr, const T value)
 		{
-			using temp_args = ChangeValue<TimeType, T*, T>;
+			using temp_args = ChangeValue<T*, T, TimeType>;
 			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, ptr, *ptr);
 			undoActions.push_back(std::move(p));
 			*ptr = value;
@@ -99,7 +99,7 @@ namespace MenticsGame {
 		template <typename T> 
 		void addItem(TimeType at, std::vector<T>* collection, T newItem)
 		{
-			using temp_args = DeleteItem<TimeType, std::vector<T>, size_t>;
+			using temp_args = DeleteItem<std::vector<T>, size_t, TimeType>;
 			size_t key = addVal(collection, newItem);
 			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, key); 
 			undoActions.push_back(std::move(p)); 
@@ -108,7 +108,7 @@ namespace MenticsGame {
 		template <typename T, typename K>
 		void deleteItem(TimeType at, std::vector<T>* collection, K key)
 		{
-			using temp_args = AddItem<TimeType, std::vector<T>, T>;
+			using temp_args = AddItem<std::vector<T>, T, TimeType>;
 
 			T obj = deleteVal(collection, key);
 			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, obj);

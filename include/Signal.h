@@ -15,6 +15,7 @@ namespace MenticsGame {
 	template<typename A>
 	class Signal : public SignalBase<SignalFunction<A>> {
 	public:
+		Signal() {}
 		Signal(SignalFunction<A> initial) : SignalBase<SignalFunction<A>>(initial) { }
 
 		virtual A At(double time) {

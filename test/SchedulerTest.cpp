@@ -61,7 +61,7 @@ public:
 		std::this_thread::sleep_for(100ms);
 		TimeType t = 1; 
 		
-		schedModel.consumeOutgoing(5, [&t, &sched](auto ev) {
+		schedModel.consumeOutgoing([&t, &sched](auto ev, 5 ) {
 			log->trace("checking {0}",ev->occursAt);
 
 			Assert::AreEqual(t, ev->occursAt);
