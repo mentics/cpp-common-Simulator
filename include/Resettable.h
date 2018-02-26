@@ -116,6 +116,16 @@ namespace MenticsGame {
 			undoActions.push_back(std::move(p));
 		}
 
+		void discardOldest(TimeType newOldest)
+		{
+			oldest = newOldest;
+			while ((!undoActions.empty()) && newOldest > undoActions.front()->at)
+			{
+				undoActions.pop_front();
+			}
+
+		}
+
 		void reset(TimeType to)
 		{
 			if(to < oldest)
