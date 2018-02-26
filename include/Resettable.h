@@ -80,11 +80,12 @@ namespace MenticsGame {
 		}
 	};
 
-	
+	//RESETTABLE --------------------------
 	template <typename TimeType = TimePoint>
 	class Resettable
 	{
 		std::deque<std::unique_ptr<Action<TimeType>>> undoActions;
+		TimeType oldest;
 	public:
 		  
 		template <typename T> 
@@ -117,6 +118,12 @@ namespace MenticsGame {
 
 		void reset(TimeType to)
 		{
+			if(to < oldest)
+			{
+				log->error("reset to Older than Oldest");
+				to = oldest;
+			}
+
 			while (  (!undoActions.empty()) && to <= undoActions.back()->at)
 			{
 				undoActions.back()->apply();
