@@ -155,6 +155,6 @@ private:
 
 	TimeType processedTime;
 };
-PTRS2(Scheduler, TimeType, Model)
+PTRS2(Scheduler, Model, TimeType)
 
 }
