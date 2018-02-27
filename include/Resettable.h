@@ -3,7 +3,7 @@
 #include "MenticsCommon.h"
 #include "readerwriterqueue.h"
 #include <deque>
-
+#include "Signal.h"
 
 template <typename T> class queue;
 template <typename T> class vector;
@@ -30,6 +30,18 @@ namespace MenticsGame {
 
 		return tmp;
 	}
+
+	template<typename T>
+	void changeVal(T *ptr, T value)
+	{
+		*ptr = value;
+	}
+
+	template<typename T>
+	void changeVal(ValueSignal<T> *ptr, T value)
+	{
+		ptr->add(value);
+	}
 	
 	template <typename TimeType>
 	class Action
@@ -49,7 +61,7 @@ namespace MenticsGame {
 		ChangeValue(TimeType at, T* ptr, T existingValue) : Action(at), ptr(ptr), value(existingValue) {}
 		void apply()
 		{
-			*ptr = value;
+			changeVal(ptr, value);
 		}
 	};
 

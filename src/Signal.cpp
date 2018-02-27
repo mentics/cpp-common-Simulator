@@ -5,10 +5,18 @@
 namespace MenticsGame
 {
 	template<typename T, typename TimeType>
+	void Signal<T, TimeType>::add(T val)
+	{
+		Values.push_back(val);
+		removeOldest(oldest);
+	}
+
+	template<typename T, typename TimeType>
 	void Signal<T, TimeType>::undo()
 	{
 		Values.pop_back();
 	}
+
 	template<typename T, typename TimeType>
 	void Signal<T, TimeType>::removeOldest(TimeType upTo)
 	{

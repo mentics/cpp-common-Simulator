@@ -11,6 +11,7 @@ namespace MenticsGame
 		struct ValueAtTime { T value; TimeType at; };
 		std::deque<ValueAtTime> Values;
 	public:
+		void add(T val);
 		void undo();
 		void removeOldest(TimeType upTo);
 
