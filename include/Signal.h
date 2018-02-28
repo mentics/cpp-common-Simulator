@@ -12,6 +12,19 @@ namespace MenticsGame
 		struct ValueAtTime { T value; TimeType at; };
 		std::deque<ValueAtTime> Values;
 	public:
+
+		bool constantValue(TimeType t, TimeType now)
+		{
+			return now => value;
+		}
+
+		double CappedLinearValue(double startGameTime, double initial, double rate, double max, TimeType now)
+		{	
+				double n = initial + rate * (now - startGameTime);
+				return n > max ? max : n;
+		
+		}
+
 		void undo()
 		{
 			Values.pop_back();
