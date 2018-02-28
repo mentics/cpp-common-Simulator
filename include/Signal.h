@@ -38,8 +38,19 @@ namespace MenticsGame
 	public:
 		T get(TimeType at)
 		{
-			auto val = std::find_if(Values.begin(), Values.end(), [=](ValueAtTime a) {return a.at == at ? true : false; });
-			return val->value();
+			ValueAtTime val{0,0};
+			TimeType old = 0;
+			for (std::deque<ValueAtTime>::iterator i = Values.begin(); i != Values.end(); i++)
+			{
+				if (i->at == at) { val = *i; break; }
+				else if (i->at > old && i->at < at)
+				{
+					old = i->at;
+					val = *i;
+				}
+			}
+
+			return val.value();
 		}
 	};
 
@@ -50,8 +61,20 @@ namespace MenticsGame
 	public:
 		T get(TimeType at)
 		{
-			auto val = std::find_if(Values.begin(), Values.end(), [=](ValueAtTime a) {return a.at == at ? true : false; });
-			return val->value;
+			ValueAtTime val{0,0};
+			TimeType old = 0;
+			for (std::deque<ValueAtTime>::iterator i = Values.begin(); i != Values.end(); i++)
+			{
+				if (i->at == at) { val = *i; break; }
+				else if (i->at > old && i->at < at)
+				{
+					old = i->at;
+					val = *i;
+				}
+			}
+
+			return val.value;
+		
 		}
 
 	};

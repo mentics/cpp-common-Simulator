@@ -31,13 +31,16 @@ namespace MenticsGame {
 	public:
 
 		TEST_METHOD(TestValueSignal) {
+			setupLog();
 			ValueSignal<int, int> vs;
-			vs.add(3, 1);
-			if (vs.get(1) != 3) {
-				log->info("added {}", vs.get(1));
+			vs.add(3, 3);
+			vs.add(4, 5);
+			if (vs.get(4) != 3) {
+				log->info("added {}", vs.get(4));
 				Assert::Fail();
 			}
 			vs.undo();
+
 		
 		
 
