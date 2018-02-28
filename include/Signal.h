@@ -12,11 +12,6 @@ namespace MenticsGame
 		struct ValueAtTime { T value; TimeType at; };
 		std::deque<ValueAtTime> Values;
 	public:
-		void add(T val, TimeType t)
-		{
-			Values.push_back(ValueAtTime{ val , t });
-		}
-
 		void undo()
 		{
 			Values.pop_back();
@@ -25,7 +20,7 @@ namespace MenticsGame
 
 		void removeOldest(TimeType upTo)
 		{
-			for (auto time = Values.front().at; time < upTo; value = Values.front().at) {
+			for (auto time = Values.front().at; time < upTo; time = Values.front().at) {
 				Values.pop_front();
 			}
 		}
@@ -33,9 +28,14 @@ namespace MenticsGame
 	};
 
 	template <typename T, typename TimeType = TimePoint>
-	class FunctionSignal : public Signal<std::function<T>, TimeType>
+	class FunctionSignal : public Signal<std::function<T()>, TimeType>
 	{
 	public:
+		void add(std::function<T()> val, TimeType t)
+		{
+			Values.push_back(ValueAtTime{ val , t });
+		}
+
 		T get(TimeType at)
 		{
 			ValueAtTime val{0,0};
@@ -59,6 +59,11 @@ namespace MenticsGame
 	class ValueSignal : public Signal<T, TimeType>
 	{
 	public:
+		void add(T val, TimeType t)
+		{
+			Values.push_back(ValueAtTime{ val , t });
+		}
+
 		T get(TimeType at)
 		{
 			ValueAtTime val{0,0};

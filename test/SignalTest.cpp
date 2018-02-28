@@ -40,9 +40,54 @@ namespace MenticsGame {
 				Assert::Fail();
 			}
 			vs.undo();
+			vs.undo();
+			vs.add(5, 3);
+			if (vs.get(3) != 5) {
+				log->info("added {}", vs.get(3));
+				Assert::Fail();
+			}
+
+		}
 
 		
-		
+
+		TEST_METHOD(TestFunctionSignal)
+		{
+			setupLog();
+			
+
+			FunctionSignal<int, int> fs;
+			
+			 
+			fs.add([=]() {return 5 * 5; }, 3);
+			fs.add([=]() {return 5 * 10; }, 4);
+			
+			if (fs.get(3) != 25) {
+				log->info("added {}", fs.get(3));
+				Assert::Fail();
+			}
+			fs.undo();
+			fs.undo();
+			fs.add([=]() {return 5 + 5; }, 1);
+			if (fs.get(3) != 10) {
+				log->info("added {}", fs.get(3));
+				Assert::Fail();
+			}
+
+		}
+
+		TEST_METHOD(TestSignalRemoveOldest)
+		{
+			setupLog();
+			ValueSignal<int, int> vs;
+			vs.add(3, 1);
+			vs.add(4, 2);
+			vs.add(5, 3);
+			vs.add(6, 4);
+
+			vs.removeOldest(2);
+			
+			for (int i = 1; i < 5; i++)log->info("{0}", vs.get(i));
 
 
 		}
