@@ -43,7 +43,8 @@ struct Event {
 	}
 
 	static bool compare(const EventUniquePtr<Model,TimeType>& ev1, const EventUniquePtr<Model, TimeType>& ev2) {
-		return ev1->timeToRun > ev2->timeToRun;
+		//return ev1->timeToRun > ev2->timeToRun;
+		return true;
 	}
 
 	virtual void run(SchedulatorPtr<Model, TimeType> sched, nn::nn<Model*> model) = 0;
@@ -74,7 +75,7 @@ private:
 	std::deque<OutEventUniquePtr<TimeType>> outgoing;
 
 public:
-	void schedule(EventUniquePtr<TimeType, Model> ev);
+	void schedule(EventUniquePtr<TimeType, Model> ev) {};
 	
 	
 	SchedulerModel(std::string name) : 
