@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MenticsCommon.h"
+#include "MenticsCommonTest.h"
 #include "readerwriterqueue.h"
 #include <deque>
 #include "Signal.h"
@@ -140,6 +141,7 @@ namespace MenticsGame {
 
 		void reset(TimeType to)
 		{
+			setupLog();
 			if(to < oldest)
 			{
 				log->error("reset to Older than Oldest");
