@@ -1,8 +1,6 @@
 #pragma once
 
 #include "concurrentqueue.h"
-
-#include "MenticsCommonTest.h"
 #include "MenticsCommon.h"
 #include "PriorityQueue.h"
 
@@ -43,7 +41,7 @@ struct Event {
 	}
 
 	static bool compare(const EventUniquePtr<Model,TimeType>& ev1, const EventUniquePtr<Model, TimeType>& ev2) {
-		//return ev1->timeToRun > ev2->timeToRun;
+		//return ev1.timeToRun > ev2.timeToRun;
 		return true;
 	}
 

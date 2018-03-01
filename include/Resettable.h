@@ -39,7 +39,7 @@ namespace MenticsGame {
 	}
 
 	template<typename T>
-	void changeVal(ValueSignal<T> *ptr, T value)
+	void changeVal(Signal<T> *ptr, T value)
 	{
 		ptr->add(value);
 	}
@@ -53,7 +53,7 @@ namespace MenticsGame {
 		virtual void apply() = 0;
 	};
 
-	template <typename CollectionT, typename T, typename TimeType = TimePoint>
+	template <typename T, typename TimeType = TimePoint>
 	class ChangeValue : public Action<TimeType>
 	{
 		T value;
@@ -104,7 +104,7 @@ namespace MenticsGame {
 		template <typename T> 
 		void changeValue(TimeType at, T* ptr, const T value)
 		{
-			using temp_args = ChangeValue<T*, T, TimeType>;
+			using temp_args = ChangeValue<T, TimeType>;
 			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, ptr, *ptr);
 			undoActions.push_back(std::move(p));
 			*ptr = value;

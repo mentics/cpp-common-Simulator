@@ -12,24 +12,26 @@ namespace MenticsGame
 		struct ValueAtTime { T value; TimeType at; };
 		std::deque<ValueAtTime> Values;
 	public:
-
-		bool constantValue(TimeType t, TimeType now)
+		void reset(TimeType resetTime)
 		{
-			return now => value;
+			while (resetTime < Values.back())Values.pop_back();
 		}
 
-		double CappedLinearValue(double startGameTime, double initial, double rate, double max, TimeType now)
-		{	
-				double n = initial + rate * (now - startGameTime);
-				return n > max ? max : n;
-		
-		}
-
-		void undo()
+		void add(T val, TimeType t)
 		{
-			Values.pop_back();
+			Values.push_back(ValueAtTime{ val , t });
 		}
 
+		T get(TimeType at)
+		{
+			for (std::deque<ValueAtTime>::reverse_iterator i = Values.rbegin();
+				i != Values.rend(); ++i)
+			{
+				if (i->at <= at){
+					return i->value;
+				}
+			}
+		}
 
 		void removeOldest(TimeType upTo)
 		{
@@ -49,53 +51,26 @@ namespace MenticsGame
 			Values.push_back(ValueAtTime{ val , t });
 		}
 
-		T get(TimeType at)
+		void getValue(TimeType at)
 		{
-			ValueAtTime val{0,0};
-			TimeType old = 0;
-			for (std::deque<ValueAtTime>::iterator i = Values.begin(); i != Values.end(); i++)
-			{
-				if (i->at == at) { val = *i; break; }
-				else if (i->at > old && i->at < at)
-				{
-					old = i->at;
-					val = *i;
-				}
-			}
+			get(at)(at);
+		}
 
-			return val.value();
+
+		static bool constantValue(TimeType t, TimeType now)
+		{
+			return now = > value;
+		}
+
+		static double CappedLinearValue(double startGameTime, double initial, double rate, double max, TimeType now)
+		{
+			double n = initial + rate * (now - startGameTime);
+			return n > max ? max : n;
+
 		}
 	};
 
 
-	template <typename T, typename TimeType = TimePoint>
-	class ValueSignal : public Signal<T, TimeType>
-	{
-	public:
-		void add(T val, TimeType t)
-		{
-			Values.push_back(ValueAtTime{ val , t });
-		}
-
-		T get(TimeType at)
-		{
-			ValueAtTime val{0,0};
-			TimeType old = 0;
-			for (std::deque<ValueAtTime>::iterator i = Values.begin(); i != Values.end(); i++)
-			{
-				if (i->at == at) { val = *i; break; }
-				else if (i->at > old && i->at < at)
-				{
-					old = i->at;
-					val = *i;
-				}
-			}
-
-			return val.value;
-		
-		}
-
-	};
 	
 	
 	
