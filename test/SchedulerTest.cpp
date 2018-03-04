@@ -3,7 +3,7 @@
 #include <thread>
 
 #include "MenticsCommonTest.h"
-#include "Scheduler.hpp" // This should be the only place that includes this at this level
+#include "Scheduler.h" // This should be the only place that includes this at this level
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std::chrono_literals;
