@@ -7,7 +7,7 @@
 
 namespace MenticsGame
 {
-	template <typename T, typename TimeType>
+	template <typename T, typename TimeType = TimePoint>
 	class SignalCollection
 	{
 		struct SignalCollectionItem { TimeType created; TimeType deleted = FOREVER; T value; };
@@ -28,7 +28,12 @@ namespace MenticsGame
 		void reset(TimeType resetTime)
 		{
 			vals.erase(std::remove_if(vals.begin(), vals.end(), [=](SignalCollectionItem a) {return a.created > resetTime; }), vals.end());
-			for (SignalCollectionItem i : vals) i->deleted >= resetTime ? i.deleted = FOREVER : continue;
+			for (SignalCollectionItem i : vals) {
+				if (i.deleted >= resetTime) {
+					i.deleted = FOREVER;
+					if (i.deleted > resetTime) i.value.reset(resetTime);
+				}
+			}
 		}
 
 	};
@@ -43,7 +48,7 @@ namespace MenticsGame
 	public:
 		void reset(TimeType resetTime)
 		{
-			while (resetTime < values.back())values.pop_back();
+			while (resetTime < values.back().at)values.pop_back();
 		}
 
 		void add(T val, TimeType t)
