@@ -210,6 +210,7 @@ void SchedulerModel<Model, TimeType>::consumeOutgoing(std::function<void(OutEven
 		if (ev->occursAt <= upToTime) {
 			handler(ev);
 			outgoing.pop_front();
+			Signal::oldest = upToTime - maxTimeAhead;
 			// Finally after travelling through 3 queues, the event's eventful life has come to an end.
 			// delete ev; <- it's deleted by unique_ptr
 		}
