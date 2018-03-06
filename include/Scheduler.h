@@ -72,11 +72,11 @@ private:
 	PriorityQueue<EventUniquePtr<Model, TimeType>, decltype(&Event<Model, TimeType>::compare)> processing;
 	std::deque<EventUniquePtr<Model, TimeType>> forReset;
 	std::deque<OutEventUniquePtr<TimeType>> outgoing;
-	TimeType maxTimeAhead();
+	
 
 public:
 	void schedule(EventUniquePtr<TimeType, Model> ev) {};
-	
+	TimeType maxTimeAhead();
 	
 	SchedulerModel(std::string name) : 
 		incoming(1024), processing(&Event<Model, TimeType>::compare) {}
@@ -210,7 +210,7 @@ void SchedulerModel<Model, TimeType>::consumeOutgoing(std::function<void(OutEven
 		if (ev->occursAt <= upToTime) {
 			handler(ev);
 			outgoing.pop_front();
-			Signal::oldest = upToTime - maxTimeAhead;
+			Signal::oldest = upToTime - maxTimeAhead();
 			// Finally after travelling through 3 queues, the event's eventful life has come to an end.
 			// delete ev; <- it's deleted by unique_ptr
 		}
@@ -237,7 +237,7 @@ void Scheduler<Model, TimeType>::run() {
 				reset(minTimeToRun);
 			}
 			TimeType now = timeProvider->now();
-			maxTime = now + timeProvider->maxTimeAhead();
+			maxTime = now + schedModel->maxTimeAhead();
 			Event<Model, TimeType>* ev = schedModel->first(maxTime);
 			if (ev != NULL) {
 				nextTime = ev->timeToRun;

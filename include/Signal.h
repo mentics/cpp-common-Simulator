@@ -16,7 +16,7 @@ namespace MenticsGame
 		void forEach(TimeType at, std::function<void(T*)> f)
 		{
 			for (SignalCollectionItem i : vals) {
-				if (i.created <= at < i.deleted) {
+				if (i.created <= at && at < i.deleted) {
 					f(&i.value);
 				}
 				else {
@@ -24,23 +24,30 @@ namespace MenticsGame
 				}
 			}
 		}
-			void removeOld(TimeType upTo)
-			{
-				
-				vals.erase(std::remove_if(vals.begin(), vals.end(), [=](SignalCollectionItem a) {return a.deleted < upTo; }), vals.end());
 
-			}
+		void add(T value, TimeType now)
+		{
+			SignalCollectionItem i = { now, FOREVER, value };
+			vals.push_back(i);
+		}
 
-			void reset(TimeType resetTime)
-			{
-				vals.erase(std::remove_if(vals.begin(), vals.end(), [=](SignalCollectionItem a) {return a.created > resetTime; }), vals.end());
-				for (SignalCollectionItem i : vals) {
-					if (i.deleted >= resetTime) {
-						i.deleted = FOREVER;
-						if (i.deleted > resetTime) i.value.reset(resetTime);
-					}
+		void removeOld(TimeType upTo)
+		{
+			
+			vals.erase(std::remove_if(vals.begin(), vals.end(), [=](SignalCollectionItem a) {return a.deleted < upTo; }), vals.end());
+
+		}
+
+		void reset(TimeType resetTime)
+		{
+			vals.erase(std::remove_if(vals.begin(), vals.end(), [=](SignalCollectionItem a) {return a.created > resetTime; }), vals.end());
+			for (SignalCollectionItem i : vals) {
+				if (i.deleted >= resetTime) {
+					i.deleted = FOREVER;
+					if (i.deleted > resetTime) i.value.reset(resetTime);
 				}
 			}
+		}
 
 		};
 
