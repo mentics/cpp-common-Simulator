@@ -28,7 +28,6 @@ PTRS2(Schedulator, Model, TimeType)
 template <typename TimeType>
 struct SchedulerTimeProvider {
 	virtual TimeType now() = 0;
-	virtual TimeType maxTimeAhead() = 0;
 	virtual chrono::nanoseconds realTimeUntil(TimeType t) = 0;
 };
 PTRS1(SchedulerTimeProvider, TimeType)
@@ -73,6 +72,7 @@ private:
 	PriorityQueue<EventUniquePtr<Model, TimeType>, decltype(&Event<Model, TimeType>::compare)> processing;
 	std::deque<EventUniquePtr<Model, TimeType>> forReset;
 	std::deque<OutEventUniquePtr<TimeType>> outgoing;
+	TimeType maxTimeAhead();
 
 public:
 	void schedule(EventUniquePtr<TimeType, Model> ev) {};

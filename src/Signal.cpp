@@ -4,8 +4,7 @@
 
 namespace MenticsGame
 {
-
-	
-
+	template<typename T, typename TimeType = TimePoint>
+	TimeType Signal<T, TimeType>::oldest = 0;
 	
 }
