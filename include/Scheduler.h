@@ -41,8 +41,8 @@ struct Event {
 	Event(const TimeType created, const TimeType timeToRun) : created(created), timeToRun(timeToRun) {
 	}
 
-	static bool compare(const EventUniquePtr<Model,TimeType>& ev1, const EventUniquePtr<Model, TimeType>& ev2) {
-		//return ev1.timeToRun > ev2.timeToRun;
+	static bool compare(const EventUniquePtr<Model, TimeType>& ev1, const EventUniquePtr<Model, TimeType>& ev2) 
+	{
 		return true;
 	}
 
@@ -76,7 +76,7 @@ private:
 
 public:
 	void schedule(EventUniquePtr<TimeType, Model> ev) {};
-	TimeType maxTimeAhead();
+	TimeType maxTimeAhead() { return 0; }
 	
 	SchedulerModel(std::string name) : 
 		incoming(1024), processing(&Event<Model, TimeType>::compare) {}
@@ -114,6 +114,7 @@ public:
 		schedModel(schedModel), timeProvider(timeProvider), model(model),
 		theThread(&Scheduler<Model, TimeType>::run, this),
 		processedTime(0) {}
+	friend int main(int argc, char** argv);
 
 	~Scheduler() {
 		log->error("Scheduler destructor");
@@ -143,6 +144,7 @@ public:
 		} while (processedTime < until);
 	}
 
+	TimeType getPT() { return processedTime; }
 private:
 	SchedulerModelPtr<Model, TimeType> schedModel;
 	SchedulerTimeProviderPtr<TimeType> timeProvider;
@@ -289,6 +291,10 @@ void Scheduler<Model, TimeType>::stop() {
 		theThread.join();
 	}
 }
+
+
+
+
 
 
 }
