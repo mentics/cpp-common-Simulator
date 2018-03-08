@@ -4,39 +4,38 @@
 
 #include "MenticsCommonTest.h"
 #include "Scheduler.h" // This should be the only place that includes this at this level
+#include "Scheduler.cpp"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std::chrono_literals;
 
-namespace MenticsGame { namespace scheduler {
-
-typedef uint64_t TimeType;
+namespace MenticsGame {
 
 struct TestModel {
-	void reset(TimeType resetToTime) {}
+	void reset(TimePoint resetToTime) {}
 };
 
-struct TestTimeProvider : public SchedulerTimeProvider<TimeType> {
-	TimeType max = 2000;
+struct TestTimeProvider : public SchedulerTimeProvider<TimePoint> {
+	TimePoint max = 2000;
 	chrono::nanoseconds until = chrono::nanoseconds(500);
 
-	TimeType now() {
+	TimePoint now() {
 		return 0;
 	}
 
-	TimeType maxTimeAhead() {
+	TimePoint maxTimeAhead() {
 		return max;
 	}
-	chrono::nanoseconds realTimeUntil(TimeType t) {
+	chrono::nanoseconds realTimeUntil(TimePoint t) {
 		return until;
 	}
 };
 
-class TestEvent : public Event< TestModel, TimeType> {
+class TestEvent : public Event< TestModel, TimePoint> {
 public:
-	TestEvent(const TimeType created, const TimeType runAt) : Event(created, runAt) {}
+	TestEvent(const TimePoint created, const TimePoint runAt) : Event(created, runAt) {}
 
-	void run(SchedulatorPtr<TestModel,TimeType> sched, nn::nn<TestModel*> model) {
+	void run(SchedulatorPtr<TestModel,TimePoint> sched, nn::nn<TestModel*> model) {
 		//BOOST_LOG_SEV(sched->lg, boost::log::trivial::trace) << "TestEvent for " << runAt;
 	}
 
@@ -52,15 +51,16 @@ public:
 	TEST_METHOD(TestScheduler) {
 		
 		TestTimeProvider timeProvider;
-		SchedulerModel<TimeType,TestModel> schedModel("SchedulerModel");
+		SchedulerModel<TestModel,TimePoint> schedModel("SchedulerModel");
 		TestModel model;
-//		Scheduler<TestModel, TimeType> sched("Scheduler", nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
-		schedModel.schedule(uniquePtrC<Event<TestModel, TimeType>, TestEvent>(1, 1));
-		schedModel.schedule(uniquePtrC<Event<TestModel, TimeType>, TestEvent>(2, 2));
-		schedModel.schedule(uniquePtrC<Event<TestModel, TimeType>, TestEvent>(3, 3));
-		schedModel.schedule(uniquePtrC<Event<TestModel, TimeType>,TestEvent>(4, 4));
+		Scheduler<TestModel,TimePoint> sched("Scheduler", nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
+		sched.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(1, 1));
+		schedModel.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(1, 1));
+		schedModel.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(2, 2));
+		schedModel.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(3, 3));
+		schedModel.schedule(uniquePtrC<Event<TestModel, TimePoint>,TestEvent>(4, 4));
 		std::this_thread::sleep_for(100ms);
-		TimeType t = 1; 
+		TimePoint t = 1; 
 		
 		//schedModel.consumeOutgoing([&t, &sched](auto ev, 5) {
 		//	log->trace("checking {0}", ev->occursAt);
@@ -73,4 +73,4 @@ public:
 
 };
 
-}}
+}
