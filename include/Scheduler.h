@@ -81,14 +81,14 @@ public:
 	SchedulerModel(std::string name) : 
 		incoming(1024), processing(&Event<Model, TimeType>::compare) {}
 	~SchedulerModel() {
-		log->error("SchedulerModel destructor");
+		mlog->error("SchedulerModel destructor");
 	}
 
 	
 
 	// Runs on outside thread
 	void schedule(EventUniquePtr<Model, TimeType> ev) {
-		log->trace("Scheduling event");
+		mlog->trace("Scheduling event");
 		incoming.enqueue(std::move(ev));
 	}
 
@@ -114,10 +114,10 @@ public:
 		schedModel(schedModel), timeProvider(timeProvider), model(model),
 		theThread(&Scheduler<Model, TimeType>::run, this),
 		processedTime(0) {}
-	friend int main(int argc, char** argv);
+	
 
 	~Scheduler() {
-		log->error("Scheduler destructor");
+		mlog->error("Scheduler destructor");
 		stop();
 	}
 
@@ -125,7 +125,7 @@ public:
 
 	void schedule(EventUniquePtr<TimeType,Model> ev) {
 		schedModel->schedule(std::move(ev));
-		log->trace("notifying...");
+		mlog->trace("notifying...");
 		wakeUp();
 	}
 
@@ -163,7 +163,7 @@ PTRS2(Scheduler, Model, TimeType)
 
 template <typename Model, typename TimeType = TimePoint>
 TimeType SchedulerModel<Model, TimeType>::processIncoming() {
-	log->trace("SchedulerModel::processIncoming");
+	mlog->trace("SchedulerModel::processIncoming");
 	// TODO: assert scheduler thread?
 	TimeType minTime = FOREVER;
 	EventUniquePtr<Model, TimeType> ev = uniquePtr<EventZero<Model, TimeType>>(); // TODO: simplify this?
@@ -228,7 +228,7 @@ void SchedulerModel<Model, TimeType>::consumeOutgoing(std::function<void(OutEven
 // It loops forever and processes the events on the processing queue up to 
 template <typename Model, typename TimeType = TimePoint>
 void Scheduler<Model, TimeType>::run() {
-	log->trace("Scheduler::run");
+	mlog->trace("Scheduler::run");
 
 	while (true) {
 		TimeType nextTime = 0;
@@ -244,10 +244,10 @@ void Scheduler<Model, TimeType>::run() {
 			if (ev != NULL) {
 				nextTime = ev->timeToRun;
 				if (nextTime < now) {
-					log->warn("Event time prior to now, event processing can't keep up.");
+					mlog->warn("Event time prior to now, event processing can't keep up.");
 				}
 				if (nextTime < processedTime) {
-					log->error("Back in time processing");
+					mlog->error("Back in time processing");
 				}
 				processedTime = nextTime;
 				ev->run(schedModel, model);
@@ -260,7 +260,7 @@ void Scheduler<Model, TimeType>::run() {
 
 		if (!shouldStop) {
 			const chrono::nanoseconds sleepTime = timeProvider->realTimeUntil(nextTime);
-			log->trace("Sleeping for {0} ns", sleepTime.count());
+			mlog->trace("Sleeping for {0} ns", sleepTime.count());
 			{
 				std::unique_lock<std::mutex> lock(mtx);
 				wait.wait_for(lock, sleepTime);
@@ -269,7 +269,7 @@ void Scheduler<Model, TimeType>::run() {
 		else {
 			break;
 		}
-		log->error("looping again...");
+		mlog->error("looping again...");
 	}
 }
 
@@ -284,10 +284,10 @@ void Scheduler<Model, TimeType>::reset(TimeType resetToTime) {
 template <typename Model, typename TimeType = TimePoint>
 void Scheduler<Model, TimeType>::stop() {
 	shouldStop = true;
-	log->error("notifying...");
+	mlog->error("notifying...");
 	wait.notify_all();
 	if (theThread.joinable()) {
-		log->trace("joining...");
+		mlog->trace("joining...");
 		theThread.join();
 	}
 }

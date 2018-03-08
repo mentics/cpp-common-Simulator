@@ -58,7 +58,7 @@ namespace MenticsGame {
 			
 			if(e.value != v[0].value)
 			{
-				log->info("Entity {0} vector {1}", e.value, v[0].value);
+				mlog->info("Entity {0} vector {1}", e.value, v[0].value);
 				Assert::Fail(L"Fisrt Entity object value does not match vecotr [0] value ");
 			}
 			
@@ -66,11 +66,11 @@ namespace MenticsGame {
 			R.reset(0);
 
 			
-			for (Entity s : v)log->info("val : {0}", s.value);
+			for (Entity s : v)mlog->info("val : {0}", s.value);
 
 			if (!v.empty())
 			{
-				log->error("size : {0} should be 0", v.size());
+				mlog->error("size : {0} should be 0", v.size());
 				Assert::Fail(L"size of vector should be 0");
 			};
 

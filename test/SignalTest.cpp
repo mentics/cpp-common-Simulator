@@ -36,7 +36,7 @@ namespace MenticsGame {
 			vs.add(3, 3);
 			vs.add(4, 5);
 			if (vs.get(4) != 3) {
-				log->info("added {}", vs.get(4));
+				mlog->info("added {}", vs.get(4));
 				Assert::Fail();
 			}
 		}
@@ -75,7 +75,7 @@ namespace MenticsGame {
 
 			vs.removeOldest(2);
 			
-			for (int i = 1; i < 5; i++)log->info("{0}", vs.get(i));
+			for (int i = 1; i < 5; i++)mlog->info("{0}", vs.get(i));
 
 
 		}
