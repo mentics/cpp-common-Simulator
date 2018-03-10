@@ -50,23 +50,65 @@ namespace MenticsGame
 		}
 
 		};
-
+		
 		template <typename T, typename TimeType = TimePoint>
 		class Signal
 		{
-		protected:
-			struct ValueAtTime { T value; TimeType at; };
-			std::deque<ValueAtTime> values;
 			static TimeType oldest;
+			struct ValueAtTime { T value; TimeType at; };
+			
 		public:
-			Signal(T v) {
-				ValueAtTime d{ v, 0 };
-				values.push_back(d);
-			}
+			std::deque<ValueAtTime> values;
 
 			void reset(TimeType resetTime)
 			{
 				while (resetTime < values.back().at)values.pop_back();
+			}
+
+			void removeOldest(TimeType upTo)
+			{
+				for (auto time = values.front().at; time < upTo; time = values.front().at) {
+					values.pop_front();
+				}
+			}
+		};
+
+		template <typename T, typename TimeType = TimePoint>
+		class UnqSignal : public Signal<nn::nn_unique_ptr<T>, TimeType>
+		{
+		
+			struct ValueAtTime { nn::nn_unique_ptr<T> value; TimeType at; };
+
+		public:
+			UnqSignal (nn::nn_unique_ptr<T> v)
+			{
+				values.emplace_back(v, 0);
+			}
+
+			T* get(TimeType at)
+			{
+				for (std::deque<ValueAtTime>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i)
+				{
+					if (i->at <= at) {
+						return i.value;
+					}
+				}
+			}
+
+			void add(nn::nn_unique_ptr<T>&& val, TimeType t) 
+			{
+				if (values.size() > 1 && values[1].at <= oldest) values.pop_front();
+				values.emplace_back(val, t);
+			}
+		};
+
+		template <typename T, typename TimeType = TimePoint>
+		class ValueSignal : public Signal<T, TimeType>
+		{
+	
+		public:
+			ValueSignal(T v) {
+				values.emplace_back(v, 0);
 			}
 
 			void add(T val, TimeType t)
@@ -86,17 +128,8 @@ namespace MenticsGame
 					}
 				}
 			}
-
-			void removeOldest(TimeType upTo)
-			{
-				for (auto time = values.front().at; time < upTo; time = values.front().at) {
-					values.pop_front();
-				}
-			}
-
 		};
-		template<typename T, typename TimeType>
-		TimeType Signal<T, TimeType>::oldest = 0;
+		
 
 
 
@@ -107,7 +140,7 @@ namespace MenticsGame
 		public:
 			void add(std::function<T()> val, TimeType t)
 			{
-				Values.push_back(ValueAtTime{ val , t });
+				values.emplace_back(val, t);
 			}
 
 			void getValue(TimeType at)
