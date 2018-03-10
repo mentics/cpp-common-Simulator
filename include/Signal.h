@@ -59,7 +59,11 @@ namespace MenticsGame
 			std::deque<ValueAtTime> values;
 			static TimeType oldest;
 		public:
-			
+			Signal(T v) {
+				ValueAtTime d{ v, 0 };
+				values.push_back(d);
+			}
+
 			void reset(TimeType resetTime)
 			{
 				while (resetTime < values.back().at)values.pop_back();
