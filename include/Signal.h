@@ -10,6 +10,8 @@ namespace MenticsGame
 	template <typename T, typename TimeType = TimePoint>
 	class SignalCollection
 	{
+		PREVENT_COPY(SignalCollection);
+
 		struct SignalCollectionItem { TimeType created; TimeType deleted = FOREVER; T value; };
 		std::list<SignalCollectionItem> vals;
 	public:
@@ -41,7 +43,7 @@ namespace MenticsGame
 		void reset(TimeType resetTime)
 		{
 			vals.erase(std::remove_if(vals.begin(), vals.end(), [=](SignalCollectionItem a) {return a.created > resetTime; }), vals.end());
-			for (SignalCollectionItem i : vals) {
+			for (SignalCollectionItem& i : vals) {
 				if (i.deleted >= resetTime) {
 					i.deleted = FOREVER;
 					if (i.deleted > resetTime) i.value.reset(resetTime);
@@ -56,8 +58,9 @@ namespace MenticsGame
 		{
 		public:
 			static TimeType oldest;
-			struct ValueAtTime { ValueAtTime(T a, TimeType b);  T* value; TimeType at; };
-			
+			//struct ValueAtTime { ValueAtTime(T a, TimeType b);  T* value; TimeType at; };
+			struct ValueAtTime { T value; TimeType at; };
+
 		
 			std::deque<ValueAtTime> values;
 
@@ -75,15 +78,18 @@ namespace MenticsGame
 		};
 
 		template <typename T, typename TimeType = TimePoint>
-		class SignalUnique : public Signal<nn::nn_unique_ptr<T>, TimeType>
+		class SignalUnique
 		{
-		
+			PREVENT_COPY(SignalUnique);
+
 			struct ValueAtTimeUnique { nn::nn_unique_ptr<T> value; TimeType at; };
+			std::deque<ValueAtTimeUnique> values;
 
 		public:
-			SignalUnique (nn::nn_unique_ptr<T> v)
+
+			SignalUnique (nn::nn_unique_ptr<T>&& v)
 			{
-				values.emplace_back(v, 0);
+				values.emplace_back(std::move(v), 0);
 			}
 
 			T* get(TimeType at)
@@ -91,7 +97,8 @@ namespace MenticsGame
 				for (std::deque<ValueAtTimeUnique>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i)
 				{
 					if (i->at <= at) {
-						return i.value;
+						//return nullptr;
+						return i->value.get();
 					}
 				}
 			}
@@ -99,27 +106,40 @@ namespace MenticsGame
 			void add(nn::nn_unique_ptr<T>&& val, TimeType t) 
 			{
 				if (values.size() > 1 && values[1].at <= oldest) values.pop_front();
-				values.emplace_back(val, t);
+				values.emplace_back(std::move(val), t);
+			}
+
+			void reset(TimeType resetTime)
+			{
+				while (resetTime < values.back().at)values.pop_back();
+			}
+
+			void removeOldest(TimeType upTo)
+			{
+				for (auto time = values.front().at; time < upTo; time = values.front().at) {
+					values.pop_front();
+				}
 			}
 		};
 
 		template <typename T, typename TimeType = TimePoint>
 		class SignalValue : public Signal<T, TimeType>
 		{
-	
+			PREVENT_COPY(SignalValue);
+
 		public:
-			SignalValue(T v) {
+			SignalValue(T&& v) {
 				values.emplace_back(v, 0);
 			}
 
-			void add(T val, TimeType t)
+			void add(T&& val, TimeType t)
 			{
 				if (values.size() > 1 && values[1].at <= oldest) values.pop_front();
 
 				values.emplace_back(val , t );
 			}
 
-			T get(TimeType at)
+			const T& get(TimeType at) const
 			{
 				for (std::deque<ValueAtTime>::reverse_iterator i = values.rbegin();
 					i != values.rend(); ++i)
@@ -138,6 +158,8 @@ namespace MenticsGame
 		template <typename T, typename TimeType = TimePoint>
 		class SignalFunction : public SignalValue<std::function<T()>, TimeType>
 		{
+			PREVENT_COPY(SignalFunction);
+
 		public:
 			void add(std::function<T()> val, TimeType t)
 			{
@@ -164,7 +186,4 @@ namespace MenticsGame
 
 
 		};
-	
-
-
 }
