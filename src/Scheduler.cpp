@@ -93,7 +93,7 @@ void Scheduler<Model, TimeType>::run() {
 				reset(minTimeToRun);
 			}
 			TimeType now = timeProvider->now();
-			maxTime = now + schedModel->maxTimeAhead();
+			maxTime = now + schedModel->maxTimeAhead;
 			Event<Model, TimeType>* ev = schedModel->first(maxTime);
 			if (ev != NULL) {
 				nextTime = ev->timeToRun;
