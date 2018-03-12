@@ -3,6 +3,7 @@
 #include "concurrentqueue.h"
 #include "MenticsCommon.h"
 #include "PriorityQueue.h"
+#include "WorldModel.h"
 
 namespace chrono = std::chrono;
 
@@ -47,6 +48,37 @@ struct Event {
 	virtual void run(SchedulatorPtr<Model, TimeType> sched, nn::nn<Model*> model) = 0;
 };
 
+class EventCreateQuip : Event<WorldModel, RealTime>
+{
+public:
+	EventCreateQuip(const RealTime created, const RealTime timeToRun, const AgentId agentId, const vect3 dir) : Event(created, timeToRun), agentId(agentId), dir(dir) {
+	};
+
+	void run(SchedulatorPtr<WorldModel, RealTime> sched, nn::nn<WorldModel*> model) override
+	{
+		const RealTime LONG_ENOUGH = 50000000; // TODO: how long?
+											   //Agent* a = model->agent(agentId);
+											   //Trajectory& curTraj = *a->trajectory;
+											   //std::shared_ptr<Trajectory> visible;
+											   //if (a->trajectory->startTime < (timeToRun - LONG_ENOUGH)) {
+											   //	visible = a->trajectory;
+											   //}
+											   //vect3 pos;
+											   //vect3 vel;
+		model->createQuip(static_cast<RealTime>(this->created));
+
+		//curTraj.posVel(timeToRun, pos, vel);
+		//nn::nn_shared_ptr<Trajectory> newTraj = nn::nn_make_shared<BasicTrajectory>(timeToRun, FOREVER, pos, vel, dir);
+		//		model->change(uniquePtrC<Change2, TrajectoryChange>(timeToRun, agentId, newTraj, visible));
+	}
+
+private:
+	const AgentId agentId;
+	const vect3 dir;
+
+};
+
+
 template <typename Model, typename TimeType = TimePoint>
 class EventZero : public Event<Model, TimeType> {
 public:
@@ -73,7 +105,7 @@ private:
 	
 
 public:
-	TimeType maxTimeAhead() { return 0; }
+	TimeType maxTimeAhead = 2; // TODO: figure out a reasonable value
 	
 	SchedulerModel(std::string name) : 
 		incoming(1024), processing(&Event<Model, TimeType>::compare) {}

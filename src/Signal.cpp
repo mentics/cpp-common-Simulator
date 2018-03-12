@@ -5,5 +5,5 @@
 namespace MenticsGame
 {
 	template<typename T, typename TimeType>
-	TimeType ValueSignal<T, TimeType>::oldest = 0;
+	TimeType SignalValue<T, TimeType>::oldest = 0;
 }

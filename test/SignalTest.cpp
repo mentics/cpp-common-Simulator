@@ -32,7 +32,7 @@ namespace MenticsGame {
 
 		TEST_METHOD(TestSignal) {
 			setupLog();
-			Signal<int, int> vs;
+			SignalValue<int, int> vs;
 			vs.add(3, 3);
 			vs.add(4, 5);
 			if (vs.get(4) != 3) {
@@ -44,7 +44,7 @@ namespace MenticsGame {
 		TEST_METHOD(TestSignalZero)
 		{
 			setupLog();
-			Signal<int, int> vs;
+			SignalValue<int, int> vs;
 			
 			vs.get(0);
 		}
@@ -56,7 +56,7 @@ namespace MenticsGame {
 			setupLog();
 			
 
-			FunctionSignal<int, int> fs;
+			SignalFunction<int, int> fs;
 			
 			 
 			
@@ -67,7 +67,7 @@ namespace MenticsGame {
 		TEST_METHOD(TestSignalRemoveOldest)
 		{
 			setupLog();
-			Signal<int, int> vs;
+			SignalValue<int, int> vs;
 			vs.add(3, 1);
 			vs.add(4, 2);
 			vs.add(5, 3);

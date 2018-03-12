@@ -38,7 +38,7 @@ namespace MenticsGame {
 	}
 
 	template<typename T>
-	void changeVal(Signal<T> *ptr, T value)
+	void changeVal(SignalValue<T> *ptr, T value)
 	{
 		ptr->add(value);
 	}
