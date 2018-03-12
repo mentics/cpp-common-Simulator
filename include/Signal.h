@@ -10,14 +10,15 @@ namespace MenticsGame
 	template <typename T, typename TimeType = TimePoint>
 	class SignalCollection
 	{
-		PREVENT_COPY(SignalCollection);
+		ONLY_MOVE(SignalCollection);
 
 		struct SignalCollectionItem {
-			SignalCollectionItem(TimeType created, TimeType deleted, T&& value) : created(created), deleted(deleted), value(std::move(value)) {}
 			TimeType created;
 			TimeType deleted = FOREVER;
 			T value;
+			SignalCollectionItem(TimeType created, T&& v) : created(created), value(std::move(v)) {}
 		};
+
 		std::list<SignalCollectionItem> vals;
 	public:
 		SignalCollection() {}
@@ -37,7 +38,7 @@ namespace MenticsGame
 		void add(T&& value, TimeType now)
 		{
 			// TODO: vals.remove_if deleted < SignalValue::oldest
-			vals.emplace_back(now, FOREVER, std::move(value));
+			vals.emplace_back(now, std::move(value));
 		}
 
 		void removeOld(TimeType upTo)
@@ -61,7 +62,7 @@ namespace MenticsGame
 		template <typename T, typename TimeType = TimePoint>
 		class SignalUnique
 		{
-			PREVENT_COPY(SignalUnique);
+			ONLY_MOVE(SignalUnique);
 
 			struct ValueAtTimeUnique {
 				ValueAtTimeUnique(nn::nn_unique_ptr<T>&& value, TimeType at) : value(std::move(value)), at(at) {}
@@ -110,7 +111,7 @@ namespace MenticsGame
 		template <typename T, typename TimeType = TimePoint>
 		class SignalValue
 		{
-			PREVENT_COPY(SignalValue);
+			ONLY_MOVE(SignalValue);
 
 			struct ValueAtTime {
 				ValueAtTime(T value, TimeType at) : value(value), at(at) {}
@@ -155,27 +156,6 @@ namespace MenticsGame
 				}
 			}
 		};
-		
-
-
-
-
-		//template <typename T, typename TimeType = TimePoint>
-		//class SignalFunction : public SignalValue<std::function<T()>, TimeType>
-		//{
-		//	PREVENT_COPY(SignalFunction);
-
-		//public:
-		//	void add(std::function<T(TimeType)> val, TimeType t)
-		//	{
-		//		values.emplace_back(val, t);
-		//	}
-
-		//	void getValue(TimeType at)
-		//	{
-		//		get(at)(at);
-		//	}
-
 
 		//	static bool constantValue(TimeType t, TimeType now)
 		//	{
@@ -186,7 +166,8 @@ namespace MenticsGame
 		//	{
 		//		double n = initial + rate * (now - startGameTime);
 		//		return n > max ? max : n;
-
 		//	}
-		//};
+
+		template<typename T, typename TimeType>
+		TimeType SignalValue<T, TimeType>::oldest = 0;
 }
