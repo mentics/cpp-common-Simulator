@@ -36,6 +36,7 @@ namespace MenticsGame
 
 		void add(T&& value, TimeType now)
 		{
+			// TODO: vals.remove_if deleted < SignalValue::oldest
 			vals.emplace_back(now, FOREVER, std::move(value));
 		}
 
@@ -79,18 +80,17 @@ namespace MenticsGame
 
 			T* get(TimeType at)
 			{
-				//for (std::deque<ValueAtTimeUnique>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i)
-				//{
-				//	if (i->at <= at) {
-				//		return i->value.get();
-				//	}
-				//}
-				return nullptr;
+				for (std::deque<ValueAtTimeUnique>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i)
+				{
+					if (i->at <= at) {
+						return i->value.get();
+					}
+				}
 			}
 
 			void add(nn::nn_unique_ptr<T>&& val, TimeType t) 
 			{
-				if (values.size() > 1 && values[1].at <= oldest) values.pop_front();
+				if (values.size() > 1 && values[1].at <= SignalValue::oldest) values.pop_front();
 				values.emplace_back(std::move(val), t);
 			}
 
@@ -125,7 +125,6 @@ namespace MenticsGame
 
 			SignalValue(T v) {
 				values.emplace_back(v, 0);
-				//values.push_back({v, 0});
 			}
 
 			void reset(TimeType resetTime)
@@ -144,18 +143,16 @@ namespace MenticsGame
 			{
 				if (values.size() > 1 && values[1].at <= oldest) values.pop_front();
 				values.emplace_back(val , t );
-				//values.push_back({val, t});
 			}
 
-			const T& get(TimeType at) const
+			const T& get(TimeType at)
 			{
-				//for (std::deque<ValueAtTime>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i)
-				//{
-				//	if (i->at <= at) {
-				//		return i->value;
-				//	}
-				//}
-				return 0;
+				for (std::deque<ValueAtTime>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i)
+				{
+					if (i->at <= at) {
+						return i->value;
+					}
+				}
 			}
 		};
 		
