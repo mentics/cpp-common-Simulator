@@ -42,7 +42,7 @@ struct Event {
 
 	static bool compare(const EventUniquePtr<Model, TimeType>& ev1, const EventUniquePtr<Model, TimeType>& ev2) 
 	{
-		return true;
+		return ev1->timeToRun < ev2->timeToRun;
 	}
 
 	virtual void run(SchedulatorPtr<Model, TimeType> sched, nn::nn<Model*> model) = 0;
