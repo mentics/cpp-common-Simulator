@@ -15,17 +15,11 @@ template <typename Model, typename TimeType>
 TimeType SchedulerModel<Model, TimeType>::processIncoming() {
 	mlog->trace("SchedulerModel::processIncoming");
 	// TODO: assert scheduler thread?
-	TimeType minTime = FOREVER;
 	EventUniquePtr<Model, TimeType> ev = uniquePtr<EventZero<Model, TimeType>>(); // TODO: simplify this?
 	while (incoming.try_dequeue(ev)) {
-		TimeType evTime = ev->timeToRun;
-		if (evTime < minTime) {
-			minTime = evTime;
-		}
 		processing.push(std::move(ev));
 	}
-	//std::sort(processingQueue.begin(), processingQueue.end(), &Event<TimeType>::compare);
-	return minTime;
+	return !processing.empty() ? processing.top()->timeToRun : FOREVER;
 }
 
 
@@ -106,9 +100,8 @@ void Scheduler<Model, TimeType>::run() {
 				processedTime = nextTime;
 				ev->run(schedModel, model);
 				schedModel->completeFirst();
-			}
-			else {
-				nextTime = FOREVER;
+			} else {
+				nextTime = minTimeToRun;
 			}
 		} while (nextTime < maxTime);
 

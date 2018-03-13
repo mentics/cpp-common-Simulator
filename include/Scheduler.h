@@ -105,7 +105,7 @@ private:
 	
 
 public:
-	TimeType maxTimeAhead = 2; // TODO: figure out a reasonable value
+	TimeType maxTimeAhead = 2E9;
 	
 	SchedulerModel(std::string name) : 
 		incoming(1024), processing(&Event<Model, TimeType>::compare) {}
