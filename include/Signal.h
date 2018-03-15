@@ -157,16 +157,17 @@ namespace MenticsGame
 			}
 		};
 
-		//	static bool constantValue(TimeType t, TimeType now)
-		//	{
-		//		return [=]() {return now = > value};
-		//	}
+		template <typename TimeType >
+		bool constantValue(TimeType t, TimeType now)
+		{
+			return [t,now]() {return now = > value};
+		}
 
-		//	static double CappedLinearValue(double startGameTime, double initial, double rate, double max, TimeType now)
-		//	{
-		//		double n = initial + rate * (now - startGameTime);
-		//		return n > max ? max : n;
-		//	}
+		template <typename TimeType >
+		double CappedLinearValue(double startGameTime, double initial, double rate, double max, TimeType now)
+		{
+			return [startGameTime, initial, rate, max, now]() {n = initial + rate * (now - startGameTime); return n > max ? max : n; };
+		}
 
 		template<typename T, typename TimeType>
 		TimeType SignalValue<T, TimeType>::oldest = 0;
