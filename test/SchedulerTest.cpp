@@ -35,7 +35,7 @@ namespace MenticsGame {
 		TestEvent(const TimePoint created, const TimePoint runAt) : Event(created, runAt) {}
 
 		void run(SchedulatorPtr<TestModel, TimePoint> sched, nn::nn<TestModel*> model) {
-			mlog->trace("TestEvent for {0}", timeToRun);
+			mlog->error("TestEvent for {0}", timeToRun);
 		}
 
 	};
@@ -50,18 +50,22 @@ namespace MenticsGame {
 
 		TEST_METHOD(TestScheduler) {
 			setupLog();
-			mlog->trace("TestEvent for");
+			mlog->error("TestEvent for");
 			TestTimeProvider timeProvider;
 			SchedulerModel<TestModel, TimePoint> schedModel("SchedulerModel");
 			TestModel model;
 			Scheduler<TestModel, TimePoint> sched("Scheduler", nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
-			sched.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(1, 1));
-			schedModel.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(1, 1));
-			schedModel.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(2, 2));
-			schedModel.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(3, 3));
-			schedModel.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(4, 4));
-			std::this_thread::sleep_for(100ms);
-			TimePoint t = 1;
+			TimePoint t1 = timeProvider.now() + 1000;
+			mlog->info("time to run ev 1 : {0}", t1);
+
+			TimePoint t2 = timeProvider.now() + 3000000000;
+			mlog->info("time to run ev 1 : {0}", t2);
+
+			sched.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(timeProvider.now(), t1));
+			schedModel.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(timeProvider.now(), t2));
+			//timeProvider
+			std::this_thread::sleep_for(9000ms);
+			//TimePoint t = 1;
 
 
 
