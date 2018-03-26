@@ -5,7 +5,16 @@
 #include "CppUnitTest.h"
 #include "MenticsCommonTest.h"
 #include <iostream>
+#include "Quip.h"
+
+#include "World.h"
+#include "../src/World.cpp"
+
 #include <string>
+#include "WorldModel.h"
+#include "../src/WorldModel.cpp" 
+#include "Scheduler.h"
+#include "Scheduler.cpp"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -49,7 +58,12 @@ namespace MenticsGame {
 			vs.get(0);
 		}
 
-		
+		TEST_METHOD(TestSignalCollectionWithWorld)
+		{
+			World arr[] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+
+		}
 
 		TEST_METHOD(TestFunctionSignal)
 		{
