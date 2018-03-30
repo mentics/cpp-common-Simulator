@@ -39,6 +39,7 @@ namespace MenticsGame {
 		}
 
 	};
+	PTRS(TestEvent); 
 
 
 	TEST_CLASS(SchedulerTest)
@@ -51,9 +52,12 @@ namespace MenticsGame {
 		TEST_METHOD(TestScheduler) {
 			setupLog();
 			mlog->error("TestEvent for");
+			
 			TestTimeProvider timeProvider;
 			SchedulerModel<TestModel, TimePoint> schedModel("SchedulerModel");
 			TestModel model;
+
+
 			Scheduler<TestModel, TimePoint> sched("Scheduler", nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
 			TimePoint t1 = timeProvider.now() + 1000;
 			mlog->info("time to run ev 1 : {0}", t1);
@@ -61,8 +65,10 @@ namespace MenticsGame {
 			TimePoint t2 = timeProvider.now() + 3000000000;
 			mlog->info("time to run ev 1 : {0}", t2);
 
-			sched.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(timeProvider.now(), t1));
-			schedModel.schedule(uniquePtrC<Event<TestModel, TimePoint>, TestEvent>(timeProvider.now(), t2));
+			TestEvent t = TestEvent(timeProvider.now(), t1); 
+
+			//sched.schedule((TestEventUniquePtr)std::make_unique(t));   
+			//schedModel.schedule(uniquePtrC<TestEvent>(TestEvent(timeProvider.now(), t2))); 
 			//timeProvider
 			std::this_thread::sleep_for(9000ms);
 			//TimePoint t = 1;
