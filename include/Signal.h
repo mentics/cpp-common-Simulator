@@ -158,13 +158,13 @@ namespace MenticsGame
 		};
 
 		template <typename TimeType >
-		bool constantValue(TimeType t, TimeType now)
+		std::function<bool()> constantValue(TimeType t, TimeType now)
 		{
 			return [t,now]() {return now = > value};
 		}
 
 		template <typename TimeType >
-		double CappedLinearValue(double startGameTime, double initial, double rate, double max, TimeType now)
+		std::function<double()> CappedLinearValue(double startGameTime, double initial, double rate, double max, TimeType now)
 		{
 			return [startGameTime, initial, rate, max, now]() {n = initial + rate * (now - startGameTime); return n > max ? max : n; };
 		}
