@@ -5,6 +5,7 @@
 #include "MenticsCommonTest.h"
 #include "Scheduler.h" // This should be the only place that includes this at this level
 #include "Scheduler.cpp"  
+#include "nn.hpp"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std::chrono_literals;
@@ -30,12 +31,24 @@ namespace MenticsGame {
 		}
 	};
 
+	bool ran = false;
+	TestTimeProvider timeProvider;
+
 	class TestEvent : public Event< TestModel, TimePoint> {
 	public:
 		TestEvent(const TimePoint created, const TimePoint runAt) : Event(created, runAt) {}
 
 		void run(SchedulatorPtr<TestModel, TimePoint> sched, nn::nn<TestModel*> model) {
+			
 			mlog->error("TestEvent for {0}", timeToRun);
+			if (timeToRun+0.5 > timeProvider.now()) mlog->error(" run at runAt");
+			OutEvent<> e(0);
+			
+			sched->addOutEvent(uniquePtrC<OutEvent<>,OutEvent<>>(100));      
+			
+			system("color 00");
+			ran = true;
+			//exit(0);
 		}
 
 	};
@@ -49,29 +62,41 @@ namespace MenticsGame {
 			
 		}
 
+		
+
+	
 		TEST_METHOD(TestScheduler) {
 			setupLog();
 			mlog->error("TestEvent for");
 			
-			TestTimeProvider timeProvider;
+			
 			SchedulerModel<TestModel, TimePoint> schedModel("SchedulerModel");
 			TestModel model;
 
 
 			Scheduler<TestModel, TimePoint> sched("Scheduler", nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
-			TimePoint t1 = timeProvider.now() + 1000;
-			mlog->info("time to run ev 1 : {0}", t1);
+			
+			for (int i = 0; i < 50; i++) {
+				schedModel.schedule(uniquePtrC<TestEvent, TestEvent>(i, i)); 
+			}
 
-			TimePoint t2 = timeProvider.now() + 3000000000;
-			mlog->info("time to run ev 1 : {0}", t2);
+			int counter = 0;
+			int counter2 = 0;
 
-			TestEvent t = TestEvent(timeProvider.now(), t1); 
+			sched.WaitUntilProcessed(100);
 
-			//sched.schedule((TestEventUniquePtr)std::make_unique(t));   
-			//schedModel.schedule(uniquePtrC<TestEvent>(TestEvent(timeProvider.now(), t2))); 
-			//timeProvider
-			std::this_thread::sleep_for(9000ms);
-			//TimePoint t = 1;
+			schedModel.consumeOutgoing([&](OutEventPtr<TimePoint> e) {counter++; }, 100); 
+			
+			schedModel.consumeOutgoing([&](OutEventPtr<TimePoint> e) {counter2++; }, 100); // see if the queue is empty
+
+			mlog->error("counter = {0}", counter); // should be 50
+			mlog->error("counter2 = {0}", counter2); // should be 0
+
+			if (!ran || counter == 0 || counter2 > 0) 
+			{
+				Assert::Fail();
+			}
+			
 
 
 

@@ -42,7 +42,7 @@ struct Event {
 
 	static bool compare(const EventUniquePtr<Model, TimeType>& ev1, const EventUniquePtr<Model, TimeType>& ev2) 
 	{
-		return ev1->timeToRun < ev2->timeToRun;
+		return ev1->timeToRun > ev2->timeToRun;
 	}
 
 	virtual void run(SchedulatorPtr<Model, TimeType> sched, nn::nn<Model*> model) = 0;
@@ -61,9 +61,11 @@ template <typename TimeType = TimePoint>
 struct OutEvent {
 	const TimeType occursAt;
 
-	OutEvent(const TimeType occursAt) : created(occursAt) {}
+	OutEvent(const TimeType occursAt) : occursAt(occursAt) {}
 };
 
+template <typename Model, typename TimeType = TimePoint>
+class Scheduler;
 
 template <typename Model, typename TimeType = TimePoint>
 class SchedulerModel : public Schedulator<Model, TimeType> {
@@ -75,6 +77,8 @@ private:
 	
 
 public:
+	friend class Scheduler<Model, TimeType>;
+
 	TimeType maxTimeAhead = 2E9;
 	
 	SchedulerModel(std::string name) : 
@@ -101,6 +105,7 @@ PTRS2(SchedulerModel, Model, TimeType)
 template <typename Model, typename TimeType = TimePoint>
 class Scheduler  {
 public:
+	friend class SchedulerTest;  
 	Scheduler(std::string name, SchedulerModelPtr<Model, TimeType> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model) :
 		schedModel(schedModel), timeProvider(timeProvider), model(model),
 		theThread(&Scheduler<Model, TimeType>::run, this),
@@ -127,8 +132,8 @@ public:
 	// Only used for testing. TODO: untested
 	void WaitUntilProcessed(TimeType until) {
 		do {
-			Thread.Sleep(100);
-		} while (processedTime < until);
+			std::this_thread::sleep_for(chrono::microseconds(100)); 
+		} while (processedTime < until && !schedModel->processing.empty());
 	}
 
 	TimeType getPT() { return processedTime; }

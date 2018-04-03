@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Scheduler.h"
+#include "Signal.h"
 
 namespace MenticsGame
 {
@@ -58,9 +59,11 @@ void SchedulerModel<Model, TimeType>::consumeOutgoing(std::function<void(OutEven
 	while (!outgoing.empty()) {
 		OutEventPtr<TimeType> ev = NN_CHECK_ASSERT(outgoing.front().get());
 		if (ev->occursAt <= upToTime) {
+			mlog->error("inside consumeoutgoing");
 			handler(ev);
 			outgoing.pop_front();
-			Signal::oldest = upToTime - maxTimeAhead();
+			
+			SignalValue<Model, TimeType>::oldest = upToTime - maxTimeAhead; 
 			// Finally after travelling through 3 queues, the event's eventful life has come to an end.
 			// delete ev; <- it's deleted by unique_ptr
 		}
