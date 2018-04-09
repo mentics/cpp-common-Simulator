@@ -60,8 +60,9 @@ public:
 template <typename TimeType = TimePoint>
 struct OutEvent {
 	const TimeType occursAt;
-
-	OutEvent(const TimeType occursAt) : occursAt(occursAt) {}
+	std::string name;
+	QuipPtr quip;
+	OutEvent(const TimeType occursAt, std::string name, QuipPtr q) : occursAt(occursAt), name(name), quip(q) {}
 };
 
 template <typename Model, typename TimeType = TimePoint>
@@ -137,6 +138,7 @@ public:
 	}
 
 	TimeType getPT() { return processedTime; }
+	SchedulerModelPtr<Model, TimeType> getSchedModel() { return schedModel; } 
 
 private:
 	SchedulerModelPtr<Model, TimeType> schedModel;
