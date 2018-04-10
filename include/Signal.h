@@ -5,6 +5,7 @@
 #include <list>
 
 
+
 namespace MenticsGame
 {
 	template <typename T, typename TimeType = TimePoint>
@@ -35,10 +36,11 @@ namespace MenticsGame
 			}
 		}
 
-		void add(T&& value, TimeType now)
-		{
+		nn::nn<T*> add(T&& value, TimeType now)
+		{ 
 			// TODO: vals.remove_if deleted < SignalValue::oldest
 			vals.emplace_back(now, std::move(value));
+			return nn::nn_addr(vals.back().value);    
 		}
 
 		void removeOld(TimeType upTo)
@@ -105,7 +107,7 @@ namespace MenticsGame
 				for (auto time = values.front().at; time < upTo; time = values.front().at) {
 					values.pop_front();
 				}
-			}
+     	}
 		};
 
 		template <typename T, typename TimeType = TimePoint>
