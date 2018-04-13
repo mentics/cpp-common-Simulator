@@ -91,9 +91,9 @@ namespace MenticsGame
 				}
 			}
 
-			void add(nn::nn_unique_ptr<T>&& val, TimeType t) 
+			void add(nn::nn_unique_ptr<T>&& val, TimeType t)  
 			{
-				if (values.size() > 1 && values[1].at <= SignalValue::oldest) values.pop_front();
+				if (values.size() > 1 && values[1].at <= SignalValue<TimeType>::oldest) values.pop_front();
 				values.emplace_back(std::move(val), t);
 			}
 
