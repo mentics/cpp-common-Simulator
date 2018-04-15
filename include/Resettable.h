@@ -13,148 +13,145 @@ template <typename T> class vector;
 using namespace moodycamel;
 
 namespace MenticsGame {
+
+template <typename T>
+size_t addVal(std::vector<T>* a, T v)
+{
+	a->push_back(v);
+	return a->size() - 1;
+}
+
+template<typename T>
+T deleteVal(std::vector<T>* a, int v) 
+{
+	auto tmp = a->at(v);
+	a->erase(a->begin() + v);
+
+	return tmp;
+}
+
+template<typename T>
+void changeVal(T *ptr, T value)
+{
+	*ptr = value;
+}
+
+template<typename T, typename TimeType>
+void changeVal(SignalValue<T, TimeType> *ptr, T value)
+{
+	ptr->add(value);
+}
 	
+template <typename TimeType>
+class Action
+{
+public:
+	Action(TimeType t) : at(t) {}
+	TimeType at;
+	virtual void apply() = 0;
+};
 
-	template <typename T>
-	size_t addVal(std::vector<T>* a, T v)
+template <typename T, typename TimeType>
+class ChangeValue : public Action<TimeType>
+{
+	T value;
+	T* ptr;
+public:
+	ChangeValue(TimeType at, T* ptr, T existingValue) : Action(at), ptr(ptr), value(existingValue) {}
+	void apply()
 	{
-		a->push_back(v);
-		return a->size() - 1;
+		changeVal(ptr, value);
 	}
+};
 
-	template<typename T>
-	T deleteVal(std::vector<T>* a, int v) 
+template <typename CollectionT, typename Key, typename TimeType>
+class DeleteItem : public Action<TimeType>
+{
+	Key delKey;
+	CollectionT* ptr;
+public:
+	DeleteItem(TimeType at, CollectionT* collection, Key delKey) : Action(at), ptr(collection), delKey(delKey) {}
+	void apply()
 	{
-		auto tmp = a->at(v);
-		a->erase(a->begin() + v);
-
-		return tmp;
+		deleteVal(ptr, delKey);
 	}
+};
 
-	template<typename T>
-	void changeVal(T *ptr, T value)
+
+template <typename CollectionT, typename T, typename TimeType>
+class AddItem : public Action<TimeType>
+{
+	T value;
+	CollectionT* ptr;
+public:
+	AddItem(TimeType at, CollectionT* ptr, T existingValue) : Action(at), ptr(ptr), value(existingValue) {}
+	void apply()
 	{
+		addVal(ptr, value);
+	}
+};
+
+//RESETTABLE --------------------------
+template <typename TimeType>
+class Resettable
+{
+	std::deque<std::unique_ptr<Action<TimeType>>> undoActions;
+	TimeType oldest;
+public:
+		  
+	template <typename T> 
+	void changeValue(TimeType at, T* ptr, const T value)
+	{
+		using temp_args = ChangeValue<T, TimeType>;
+		std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, ptr, *ptr);
+		undoActions.push_back(std::move(p));
 		*ptr = value;
 	}
 
-	template<typename T>
-	void changeVal(SignalValue<T> *ptr, T value)
+	template <typename T> 
+	void addItem(TimeType at, std::vector<T>* collection, T newItem)
 	{
-		ptr->add(value);
+		using temp_args = DeleteItem<std::vector<T>, size_t, TimeType>;
+		size_t key = addVal(collection, newItem);
+		std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, key); 
+		undoActions.push_back(std::move(p)); 
 	}
-	
-	template <typename TimeType>
-	class Action
+
+	template <typename T, typename K>
+	void deleteItem(TimeType at, std::vector<T>* collection, K key)
 	{
-	public:
-		Action(TimeType t) : at(t) {}
-		TimeType at;
-		virtual void apply() = 0;
-	};
+		using temp_args = AddItem<std::vector<T>, T, TimeType>;
 
-	template <typename T, typename TimeType = TimePoint>
-	class ChangeValue : public Action<TimeType>
+		T obj = deleteVal(collection, key);
+		std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, obj);
+		undoActions.push_back(std::move(p));
+	}
+
+	void discardOldest(TimeType newOldest)
 	{
-		T value;
-		T* ptr;
-	public:
-		ChangeValue(TimeType at, T* ptr, T existingValue) : Action(at), ptr(ptr), value(existingValue) {}
-		void apply()
+		oldest = newOldest;
+		while ((!undoActions.empty()) && newOldest > undoActions.front()->at)
 		{
-			changeVal(ptr, value);
+			undoActions.pop_front();
 		}
-	};
 
-	template <typename CollectionT, typename Key, typename TimeType = TimePoint>
-	class DeleteItem : public Action<TimeType>
+	}
+
+	void reset(TimeType to)
 	{
-		Key delKey;
-		CollectionT* ptr;
-	public:
-		DeleteItem(TimeType at, CollectionT* collection, Key delKey) : Action(at), ptr(collection), delKey(delKey) {}
-		void apply()
+		setupLog();
+		if(to < oldest)
 		{
-			deleteVal(ptr, delKey);
-		}
-	};
-
-
-	template <typename CollectionT, typename T, typename TimeType = TimePoint>
-	class AddItem : public Action<TimeType>
-	{
-		T value;
-		CollectionT* ptr;
-	public:
-		AddItem(TimeType at, CollectionT* ptr, T existingValue) : Action(at), ptr(ptr), value(existingValue) {}
-		void apply()
-		{
-			addVal(ptr, value);
-		}
-	};
-
-	//RESETTABLE --------------------------
-	template <typename TimeType = TimePoint>
-	class Resettable
-	{
-		std::deque<std::unique_ptr<Action<TimeType>>> undoActions;
-		TimeType oldest;
-	public:
-		  
-		template <typename T> 
-		void changeValue(TimeType at, T* ptr, const T value)
-		{
-			using temp_args = ChangeValue<T, TimeType>;
-			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, ptr, *ptr);
-			undoActions.push_back(std::move(p));
-			*ptr = value;
+			mlog->error("reset to Older than Oldest");
+			to = oldest;
 		}
 
-		template <typename T> 
-		void addItem(TimeType at, std::vector<T>* collection, T newItem)
+		while (  (!undoActions.empty()) && to <= undoActions.back()->at)
 		{
-			using temp_args = DeleteItem<std::vector<T>, size_t, TimeType>;
-			size_t key = addVal(collection, newItem);
-			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, key); 
-			undoActions.push_back(std::move(p)); 
+			undoActions.back()->apply();
+			undoActions.pop_back();
 		}
-
-		template <typename T, typename K>
-		void deleteItem(TimeType at, std::vector<T>* collection, K key)
-		{
-			using temp_args = AddItem<std::vector<T>, T, TimeType>;
-
-			T obj = deleteVal(collection, key);
-			std::unique_ptr<temp_args> p = std::make_unique<temp_args>(at, collection, obj);
-			undoActions.push_back(std::move(p));
-		}
-
-		void discardOldest(TimeType newOldest)
-		{
-			oldest = newOldest;
-			while ((!undoActions.empty()) && newOldest > undoActions.front()->at)
-			{
-				undoActions.pop_front();
-			}
-
-		}
-
-		void reset(TimeType to)
-		{
-			setupLog();
-			if(to < oldest)
-			{
-				mlog->error("reset to Older than Oldest");
-				to = oldest;
-			}
-
-			while (  (!undoActions.empty()) && to <= undoActions.back()->at)
-			{
-				undoActions.back()->apply();
-				undoActions.pop_back();
-			}
-		}
-	};
-
-	
+	}
+};
 
 }

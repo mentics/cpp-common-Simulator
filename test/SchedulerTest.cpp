@@ -11,104 +11,105 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std::chrono_literals;
 
 namespace MenticsGame {
-	struct TestModel {
-		void reset(TimePoint resetToTime) {}
-	};
 
-	struct TestTimeProvider : public SchedulerTimeProvider<TimePoint> {
-		TimePoint max = 2000;
-		chrono::nanoseconds until = chrono::nanoseconds(500);
+struct TestModel {
+	void reset(TimePoint resetToTime) {}
+};
 
-		TimePoint now() {
-			return 0;
+struct TestTimeProvider : public SchedulerTimeProvider<TimePoint> {
+	TimePoint max = 2000;
+	chrono::nanoseconds until = chrono::nanoseconds(500);
+
+	TimePoint now() {
+		return 0;
+	}
+
+	TimePoint maxTimeAhead() {
+		return max;
+	}
+	chrono::nanoseconds realTimeUntil(TimePoint t) {
+		return until;
+	}
+};
+
+bool ran = false;
+TestTimeProvider timeProvider;
+
+class TestEvent : public Event< TestModel, TimePoint> {
+public:
+	TestEvent(const TimePoint created, const TimePoint runAt) : Event(created, runAt) {}
+
+	void run(SchedulatorPtr<TestModel, TimePoint> sched, nn::nn<TestModel*> model) {
+
+		mlog->error("TestEvent for {0}", timeToRun);
+		if (timeToRun + 0.5 > timeProvider.now()) mlog->error(" run at runAt");
+		OutEvent<> e(0);
+
+		sched->addOutEvent(uniquePtrC<OutEvent<>, OutEvent<>>(100));
+
+		system("color 00");
+		ran = true;
+		//exit(0);
+	}
+
+};
+PTRS(TestEvent);
+
+
+TEST_CLASS(SchedulerTest)
+{
+public:
+	TEST_CLASS_INITIALIZE(BeforeClass) {
+
+	}
+
+
+
+
+	TEST_METHOD(TestScheduler) {
+		setupLog();
+		mlog->error("TestEvent for");
+
+
+		SchedulerModel<TestModel, TimePoint> schedModel("SchedulerModel");
+		TestModel model;
+
+
+		Scheduler<TestModel, TimePoint> sched("Scheduler", nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
+
+		for (int i = 0; i < 50; i++) {
+			schedModel.schedule(uniquePtrC<TestEvent, TestEvent>(i, i));
 		}
 
-		TimePoint maxTimeAhead() {
-			return max;
-		}
-		chrono::nanoseconds realTimeUntil(TimePoint t) {
-			return until;
-		}
-	};
+		int counter = 0;
+		int counter2 = 0;
 
-	bool ran = false;
-	TestTimeProvider timeProvider;
+		sched.WaitUntilProcessed(100);
 
-	class TestEvent : public Event< TestModel, TimePoint> {
-	public:
-		TestEvent(const TimePoint created, const TimePoint runAt) : Event(created, runAt) {}
+		schedModel.consumeOutgoing([&](OutEventPtr<TimePoint> e) {counter++; }, 100);
 
-		void run(SchedulatorPtr<TestModel, TimePoint> sched, nn::nn<TestModel*> model) {
-			
-			mlog->error("TestEvent for {0}", timeToRun);
-			if (timeToRun+0.5 > timeProvider.now()) mlog->error(" run at runAt");
-			OutEvent<> e(0);
-			
-			sched->addOutEvent(uniquePtrC<OutEvent<>,OutEvent<>>(100));      
-			
-			system("color 00");
-			ran = true;
-			//exit(0);
+		schedModel.consumeOutgoing([&](OutEventPtr<TimePoint> e) {counter2++; }, 100); // see if the queue is empty
+
+		mlog->error("counter = {0}", counter); // should be 50
+		mlog->error("counter2 = {0}", counter2); // should be 0
+
+		if (!ran || counter == 0 || counter2 > 0)
+		{
+			Assert::Fail();
 		}
 
-	};
-	PTRS(TestEvent); 
-
-
-	TEST_CLASS(SchedulerTest)
-	{
-	public:
-		TEST_CLASS_INITIALIZE(BeforeClass) {
-			
-		}
-
-		
-
-	
-		TEST_METHOD(TestScheduler) {
-			setupLog();
-			mlog->error("TestEvent for");
-			
-			
-			SchedulerModel<TestModel, TimePoint> schedModel("SchedulerModel");
-			TestModel model;
-
-
-			Scheduler<TestModel, TimePoint> sched("Scheduler", nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
-			
-			for (int i = 0; i < 50; i++) {
-				schedModel.schedule(uniquePtrC<TestEvent, TestEvent>(i, i)); 
-			}
-
-			int counter = 0;
-			int counter2 = 0;
-
-			sched.WaitUntilProcessed(100);
-
-			schedModel.consumeOutgoing([&](OutEventPtr<TimePoint> e) {counter++; }, 100); 
-			
-			schedModel.consumeOutgoing([&](OutEventPtr<TimePoint> e) {counter2++; }, 100); // see if the queue is empty
-
-			mlog->error("counter = {0}", counter); // should be 50
-			mlog->error("counter2 = {0}", counter2); // should be 0
-
-			if (!ran || counter == 0 || counter2 > 0) 
-			{
-				Assert::Fail();
-			}
-			
 
 
 
-			//schedModel.consumeOutgoing([&t, &sched](auto ev, 5) {
-			//	log->trace("checking {0}", ev->occursAt);
-			//
-			//	Assert::AreEqual(t, ev->occursAt);
-			//	t++;
-			//});
-			//sched.stop();
-		}
+		//schedModel.consumeOutgoing([&t, &sched](auto ev, 5) {
+		//	log->trace("checking {0}", ev->occursAt);
+		//
+		//	Assert::AreEqual(t, ev->occursAt);
+		//	t++;
+		//});
+		//sched.stop();
+	}
 
-	};
+};
 
 }

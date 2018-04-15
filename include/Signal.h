@@ -8,7 +8,7 @@
 
 namespace MenticsGame
 {
-	template <typename T, typename TimeType = TimePoint>
+	template <typename T, typename TimeType>
 	class SignalCollection
 	{
 		ONLY_MOVE(SignalCollection);
@@ -61,7 +61,7 @@ namespace MenticsGame
 
 		};
 
-		template <typename T, typename TimeType = TimePoint>
+		template <typename T, typename TimeType>
 		class SignalUnique
 		{
 			ONLY_MOVE(SignalUnique);
@@ -110,7 +110,7 @@ namespace MenticsGame
      	}
 		};
 
-		template <typename T, typename TimeType = TimePoint>
+		template <typename T, typename TimeType>
 		class SignalValue
 		{
 			ONLY_MOVE(SignalValue);

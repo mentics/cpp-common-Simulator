@@ -2,15 +2,16 @@
 #include "Scheduler.h"
 #include "Signal.h"
 
-namespace MenticsGame
-{
+namespace MenticsGame {
 
 template <typename Model, typename TimeType>
-void SchedulerModel<Model, TimeType>::schedule(EventUniquePtr<Model, TimeType>&& ev) {
+void SchedulerModel<Model, TimeType>::schedule(TimeType afterDuration, EventUniquePtr<Model, TimeType>&& ev) {
 	mlog->trace("Scheduling event");
+	TimeType n = timeProvider->now();
+	ev->created = n;
+	ev->timeToRun = n + afterDuration;
 	incoming.enqueue(std::move(ev));
 }
-
 
 template <typename Model, typename TimeType>
 TimeType SchedulerModel<Model, TimeType>::processIncoming() {
@@ -23,15 +24,13 @@ TimeType SchedulerModel<Model, TimeType>::processIncoming() {
 	return !processing.empty() ? processing.top()->timeToRun : FOREVER;
 }
 
-
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 void SchedulerModel<Model, TimeType>::reset(TimeType toTime) {
 	// TODO
 	// TODO: delete items off outgoing > toTime
 }
 
-
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 Event<Model, TimeType>* SchedulerModel<Model, TimeType>::first(TimeType maxTime) {
 	if (!processing.empty()) {
 		Event<Model, TimeType>* top = processing.top().get();
@@ -43,18 +42,17 @@ Event<Model, TimeType>* SchedulerModel<Model, TimeType>::first(TimeType maxTime)
 	return nullptr;
 }
 
-
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 void SchedulerModel<Model, TimeType>::completeFirst() {
 	forReset.push_back(processing.pop());
 }
 
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 void SchedulerModel<Model, TimeType>::addOutEvent(OutEventUniquePtr<TimeType>&& outEvent) {
 	outgoing.push_back(std::move(outEvent));
 }
 
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 void SchedulerModel<Model, TimeType>::consumeOutgoing(std::function<void(OutEventPtr<TimeType>)> handler, TimeType upToTime) {
 	while (!outgoing.empty()) {
 		OutEventPtr<TimeType> ev = NN_CHECK_ASSERT(outgoing.front().get());
@@ -73,11 +71,9 @@ void SchedulerModel<Model, TimeType>::consumeOutgoing(std::function<void(OutEven
 	}
 }
 
-
-
 // This is the method run by the Scheduler thread.
 // It loops forever and processes the events on the processing queue up to 
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 void Scheduler<Model, TimeType>::run() {
 	mlog->trace("Scheduler::run");
 
@@ -123,14 +119,14 @@ void Scheduler<Model, TimeType>::run() {
 	}
 }
 
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 void Scheduler<Model, TimeType>::schedule(EventUniquePtr<Model, TimeType>&& ev) {
 	schedModel->schedule(std::move(ev));
 	mlog->trace("notifying...");
 	wakeUp();
 }
 
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 void Scheduler<Model, TimeType>::reset(TimeType resetToTime) {
 	// TODO: reset queues to what they were at resetToTime
 	schedModel->reset(resetToTime);
@@ -138,7 +134,7 @@ void Scheduler<Model, TimeType>::reset(TimeType resetToTime) {
 }
 
 
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 void Scheduler<Model, TimeType>::stop() {
 	shouldStop = true;
 	mlog->error("notifying...");

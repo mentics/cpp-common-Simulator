@@ -4,18 +4,16 @@
 #include "MenticsCommon.h"
 #include "PriorityQueue.h"
 #include "WorldModel.h"
+#include "EventBases.h"
 
 namespace chrono = std::chrono;
 
 namespace MenticsGame {
 
-template <typename Model, typename TimeType = TimePoint> struct Event;
+template <typename Model, typename TimeType> struct Event;
 PTRS2(Event, Model, TimeType)
-template <typename TimeType = TimePoint> struct OutEvent;
-PTRS1(OutEvent, TimeType)
 
-
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 class Schedulator {
 public:
 	virtual void schedule(EventUniquePtr<Model, TimeType>&& ev) = 0;
@@ -32,13 +30,14 @@ struct SchedulerTimeProvider {
 PTRS1(SchedulerTimeProvider, TimeType)
 
 
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 struct Event {
-	const TimeType created;
-	const TimeType timeToRun;
+	// NOTE: these should be const, but they're set by scheduler inside schedule() method
+	TimeType created;
+	TimeType timeToRun;
 
-	Event(const TimeType created, const TimeType timeToRun) : created(created), timeToRun(timeToRun) {
-	}
+	//Event(const TimeType created, const TimeType timeToRun) : created(created), timeToRun(timeToRun) {
+	//}
 
 	static bool compare(const EventUniquePtr<Model, TimeType>& ev1, const EventUniquePtr<Model, TimeType>& ev2) 
 	{
@@ -49,26 +48,17 @@ struct Event {
 };
 
 
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 class EventZero : public Event<Model, TimeType> {
 public:
 	EventZero() : Event(0, 0) {}
 	void run(SchedulatorPtr<Model, TimeType> sched, nn::nn<Model*> model) {};
 };
 
-
-template <typename TimeType = TimePoint>
-struct OutEvent {
-	const TimeType occursAt;
-	std::string name;
-	QuipPtr quip;
-	OutEvent(const TimeType occursAt, std::string name, QuipPtr q) : occursAt(occursAt), name(name), quip(q) {}
-};
-
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 class Scheduler;
 
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 class SchedulerModel : public Schedulator<Model, TimeType> {
 private:
 	moodycamel::ConcurrentQueue<EventUniquePtr<Model, TimeType>> incoming;
@@ -89,7 +79,7 @@ public:
 	}
 
 	// Runs on outside thread
-	void schedule(EventUniquePtr<Model, TimeType>&& ev);
+	void schedule(TimeType afterDuration, EventUniquePtr<Model, TimeType>&& ev);
 
 	// Returns minimum timeToRun of ingested events
 	TimeType processIncoming();
@@ -103,14 +93,26 @@ public:
 PTRS2(SchedulerModel, Model, TimeType)
 
 
-template <typename Model, typename TimeType = TimePoint>
+template <typename Model, typename TimeType>
 class Scheduler  {
+	SchedulerModelPtr<Model, TimeType> schedModel;
+	SchedulerTimeProviderPtr<TimeType> timeProvider;
+	nn::nn<Model*> model;
+
+	std::thread theThread;
+	bool shouldStop = false;
+	//std::unique_lock<std::mutex> lock;
+	std::mutex mtx;
+	std::condition_variable wait;
+
+	TimeType processedTime;
+
 public:
 	friend class SchedulerTest;  
-	Scheduler(std::string name, SchedulerModelPtr<Model, TimeType> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model) :
-		schedModel(schedModel), timeProvider(timeProvider), model(model),
-		theThread(&Scheduler<Model, TimeType>::run, this),
-		processedTime(0) {}
+	Scheduler(std::string name, SchedulerModelPtr<Model, TimeType> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model)
+			: schedModel(schedModel), timeProvider(timeProvider), model(model),
+			  theThread(&Scheduler<Model, TimeType>::run, this),
+			  processedTime(0) {}
 	
 
 	~Scheduler() {
@@ -139,19 +141,6 @@ public:
 
 	TimeType getPT() { return processedTime; }
 	SchedulerModelPtr<Model, TimeType> getSchedModel() { return schedModel; } 
-
-private:
-	SchedulerModelPtr<Model, TimeType> schedModel;
-	SchedulerTimeProviderPtr<TimeType> timeProvider;
-	nn::nn<Model*> model;
-
-	std::thread theThread;
-	bool shouldStop = false;
-	//std::unique_lock<std::mutex> lock;
-	std::mutex mtx;
-	std::condition_variable wait;
-
-	TimeType processedTime;
 };
 PTRS2(Scheduler, Model, TimeType)
 

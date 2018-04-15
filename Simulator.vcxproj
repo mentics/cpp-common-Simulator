@@ -154,6 +154,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\CompositeSignal.h" />
+    <ClInclude Include="include\EventBases.h" />
     <ClInclude Include="include\readerwriterqueue.h" />
     <ClInclude Include="include\Scheduler.h" />
     <ClInclude Include="include\Resettable.h" />
