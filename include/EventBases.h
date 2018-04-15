@@ -2,6 +2,8 @@
 
 #include "MenticsCommon.h"
 
+namespace MenticsGame {
+
 template <typename TimeType>
 struct OutEvent {
 	const TimeType occursAt;
@@ -9,3 +11,5 @@ struct OutEvent {
 	OutEvent(const TimeType occursAt) : occursAt(occursAt) {}
 };
 PTRS1(OutEvent, TimeType)
+
+}

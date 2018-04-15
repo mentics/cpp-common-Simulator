@@ -24,11 +24,11 @@ namespace MenticsGame
 	public:
 		SignalCollection() {}
 
-		void forEach(TimeType at, std::function<void(T*)> f)
+		void forEach(TimeType at, std::function<void(nn::nn<T*>)> f)
 		{
 			for (SignalCollectionItem& i : vals) {
 				if (i.created <= at && at < i.deleted) {
-					f(&i.value);
+					f(nn::nn_addr(i.value));
 				}
 				else {
 					continue;

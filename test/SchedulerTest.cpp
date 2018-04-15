@@ -3,9 +3,10 @@
 #include <thread>
 
 #include "MenticsCommonTest.h"
-#include "Scheduler.h" // This should be the only place that includes this at this level
-#include "Scheduler.cpp"  
+#include "Scheduler.h"
 #include "nn.hpp"
+
+#include "Scheduler.cpp"  // This should be the only place that includes this at this level
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std::chrono_literals;
@@ -35,23 +36,21 @@ struct TestTimeProvider : public SchedulerTimeProvider<TimePoint> {
 bool ran = false;
 TestTimeProvider timeProvider;
 
-class TestEvent : public Event< TestModel, TimePoint> {
+class TestEvent : public Event<TestModel, TimePoint> {
 public:
-	TestEvent(const TimePoint created, const TimePoint runAt) : Event(created, runAt) {}
+	//TestEvent(const TimePoint created, const TimePoint runAt) : Event(created, runAt) {}
 
 	void run(SchedulatorPtr<TestModel, TimePoint> sched, nn::nn<TestModel*> model) {
-
 		mlog->error("TestEvent for {0}", timeToRun);
 		if (timeToRun + 0.5 > timeProvider.now()) mlog->error(" run at runAt");
-		OutEvent<> e(0);
+		OutEvent<TimePoint> e(0);
 
-		sched->addOutEvent(uniquePtrC<OutEvent<>, OutEvent<>>(100));
+		sched->addOutEvent(uniquePtrC<OutEvent<TimePoint>, OutEvent<TimePoint>>(100));
 
 		system("color 00");
 		ran = true;
 		//exit(0);
 	}
-
 };
 PTRS(TestEvent);
 
@@ -60,25 +59,17 @@ TEST_CLASS(SchedulerTest)
 {
 public:
 	TEST_CLASS_INITIALIZE(BeforeClass) {
-
 	}
-
-
-
 
 	TEST_METHOD(TestScheduler) {
 		setupLog();
 		mlog->error("TestEvent for");
-
-
-		SchedulerModel<TestModel, TimePoint> schedModel("SchedulerModel");
+		SchedulerModel<TestModel, TimePoint> schedModel;
 		TestModel model;
-
-
-		Scheduler<TestModel, TimePoint> sched("Scheduler", nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
+		Scheduler<TestModel, TimePoint> sched(nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
 
 		for (int i = 0; i < 50; i++) {
-			schedModel.schedule(uniquePtrC<TestEvent, TestEvent>(i, i));
+			sched.schedule(i, uniquePtrC<TestEvent, TestEvent>());
 		}
 
 		int counter = 0;
@@ -98,9 +89,6 @@ public:
 			Assert::Fail();
 		}
 
-
-
-
 		//schedModel.consumeOutgoing([&t, &sched](auto ev, 5) {
 		//	log->trace("checking {0}", ev->occursAt);
 		//
@@ -109,7 +97,6 @@ public:
 		//});
 		//sched.stop();
 	}
-
 };
 
 }

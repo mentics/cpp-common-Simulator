@@ -153,7 +153,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\CompositeSignal.h" />
     <ClInclude Include="include\EventBases.h" />
     <ClInclude Include="include\readerwriterqueue.h" />
     <ClInclude Include="include\Scheduler.h" />
@@ -171,7 +170,6 @@
   <ItemGroup>
     <ClCompile Include="src\Signal.cpp" />
     <ClCompile Include="src\Resettable.cpp" />
-    <ClCompile Include="src\Placeholder.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

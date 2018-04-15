@@ -3,7 +3,6 @@
 #include "concurrentqueue.h"
 #include "MenticsCommon.h"
 #include "PriorityQueue.h"
-#include "WorldModel.h"
 #include "EventBases.h"
 
 namespace chrono = std::chrono;
@@ -16,7 +15,7 @@ PTRS2(Event, Model, TimeType)
 template <typename Model, typename TimeType>
 class Schedulator {
 public:
-	virtual void schedule(EventUniquePtr<Model, TimeType>&& ev) = 0;
+	virtual void schedule(TimeType afterDuration, EventUniquePtr<Model, TimeType>&& ev) = 0;
 	virtual void addOutEvent(OutEventUniquePtr<TimeType>&& outEvent) = 0;
 };
 PTRS2(Schedulator, Model, TimeType)
@@ -51,7 +50,7 @@ struct Event {
 template <typename Model, typename TimeType>
 class EventZero : public Event<Model, TimeType> {
 public:
-	EventZero() : Event(0, 0) {}
+	EventZero() : Event() {}
 	void run(SchedulatorPtr<Model, TimeType> sched, nn::nn<Model*> model) {};
 };
 
@@ -59,27 +58,23 @@ template <typename Model, typename TimeType>
 class Scheduler;
 
 template <typename Model, typename TimeType>
-class SchedulerModel : public Schedulator<Model, TimeType> {
-private:
+class SchedulerModel {
+	TimeType maxTimeAhead = 2E9;
 	moodycamel::ConcurrentQueue<EventUniquePtr<Model, TimeType>> incoming;
 	PriorityQueue<EventUniquePtr<Model, TimeType>, decltype(&Event<Model, TimeType>::compare)> processing;
 	std::deque<EventUniquePtr<Model, TimeType>> forReset;
 	std::deque<OutEventUniquePtr<TimeType>> outgoing;
-	
 
 public:
 	friend class Scheduler<Model, TimeType>;
-
-	TimeType maxTimeAhead = 2E9;
-	
-	SchedulerModel(std::string name) : 
-		incoming(1024), processing(&Event<Model, TimeType>::compare) {}
+	SchedulerModel() : incoming(1024), processing(&Event<Model, TimeType>::compare) {}
 	~SchedulerModel() {
 		mlog->error("SchedulerModel destructor");
 	}
 
 	// Runs on outside thread
-	void schedule(TimeType afterDuration, EventUniquePtr<Model, TimeType>&& ev);
+	// TODO: make this method only available from Scheduler
+	void schedule(EventUniquePtr<Model, TimeType>&& ev);
 
 	// Returns minimum timeToRun of ingested events
 	TimeType processIncoming();
@@ -94,7 +89,7 @@ PTRS2(SchedulerModel, Model, TimeType)
 
 
 template <typename Model, typename TimeType>
-class Scheduler  {
+class Scheduler : public Schedulator<Model, TimeType> {
 	SchedulerModelPtr<Model, TimeType> schedModel;
 	SchedulerTimeProviderPtr<TimeType> timeProvider;
 	nn::nn<Model*> model;
@@ -109,7 +104,7 @@ class Scheduler  {
 
 public:
 	friend class SchedulerTest;  
-	Scheduler(std::string name, SchedulerModelPtr<Model, TimeType> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model)
+	Scheduler(SchedulerModelPtr<Model, TimeType> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model)
 			: schedModel(schedModel), timeProvider(timeProvider), model(model),
 			  theThread(&Scheduler<Model, TimeType>::run, this),
 			  processedTime(0) {}
@@ -122,7 +117,7 @@ public:
 
 	void run();
 
-	void schedule(EventUniquePtr<Model, TimeType>&& ev);
+	void schedule(TimeType afterDuration, EventUniquePtr<Model, TimeType>&& ev);
 
 	void wakeUp() {
 		wait.notify_all();
@@ -140,7 +135,8 @@ public:
 	}
 
 	TimeType getPT() { return processedTime; }
-	SchedulerModelPtr<Model, TimeType> getSchedModel() { return schedModel; } 
+	void addOutEvent(OutEventUniquePtr<TimeType>&& outEvent) { schedModel->addOutEvent(std::move(outEvent)); }
+	void consumeOutgoing(std::function<void(OutEventPtr<TimeType>)> handler, TimeType upToTime) { schedModel->consumeOutgoing(handler, upToTime); }
 };
 PTRS2(Scheduler, Model, TimeType)
 

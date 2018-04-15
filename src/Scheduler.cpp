@@ -5,11 +5,8 @@
 namespace MenticsGame {
 
 template <typename Model, typename TimeType>
-void SchedulerModel<Model, TimeType>::schedule(TimeType afterDuration, EventUniquePtr<Model, TimeType>&& ev) {
+void SchedulerModel<Model, TimeType>::schedule(EventUniquePtr<Model, TimeType>&& ev) {
 	mlog->trace("Scheduling event");
-	TimeType n = timeProvider->now();
-	ev->created = n;
-	ev->timeToRun = n + afterDuration;
 	incoming.enqueue(std::move(ev));
 }
 
@@ -97,7 +94,7 @@ void Scheduler<Model, TimeType>::run() {
 					mlog->error("Back in time processing");
 				}
 				processedTime = nextTime;
-				ev->run(schedModel, model);
+				ev->run(nn::nn_addr(*this), model);
 				schedModel->completeFirst();
 			} else {
 				nextTime = minTimeToRun;
@@ -120,7 +117,10 @@ void Scheduler<Model, TimeType>::run() {
 }
 
 template <typename Model, typename TimeType>
-void Scheduler<Model, TimeType>::schedule(EventUniquePtr<Model, TimeType>&& ev) {
+void Scheduler<Model, TimeType>::schedule(TimeType afterDuration, EventUniquePtr<Model, TimeType>&& ev) {
+	TimeType n = timeProvider->now();
+	ev->created = n;
+	ev->timeToRun = n + afterDuration;
 	schedModel->schedule(std::move(ev));
 	mlog->trace("notifying...");
 	wakeUp();
