@@ -43,7 +43,7 @@ public:
 	void run(SchedulatorPtr<TestModel, TimePoint> sched, nn::nn<TestModel*> model) {
 		mlog->error("TestEvent for {0}", timeToRun);
 		if (timeToRun + 0.5 > timeProvider.now()) mlog->error(" run at runAt");
-		OutEvent<TimePoint> e(0);
+		OutEvent<TimePoint> e(0, EventQuipCreated); // it should not be EventQuipCreated but for now
 
 		sched->addOutEvent(uniquePtrC<OutEvent<TimePoint>, OutEvent<TimePoint>>(100));
 

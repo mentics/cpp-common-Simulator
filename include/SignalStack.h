@@ -3,16 +3,18 @@
 #include <stack>
 
 template<typename ItemType, typename TimeType = TimePoint>
-class RessetableStack
+class SignalStack
 {
-	struct ValatTime { ItemType item; TimeType time; };
+	struct ValatTime { ItemType item; TimeType time; TimeType deletedAt; };
+	std::list<ValatTime> deleted;
 	std::stack<ValatTime> m_stack;
 public:
-	RessetableStack();
+	
 	void push(ItemType i, TimeType at);
-	void pop();
+	void pop(TimeType at); 
 	ItemType peek();
 	void reset(TimeType resetAt);
-	~RessetableStack();
+	void removeOldest(TimeType upTo, TimeType now);   
+
 };
 

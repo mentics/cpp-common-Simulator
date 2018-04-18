@@ -161,9 +161,9 @@
     <ClInclude Include="include\SchedulerModel.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\RessetableStack.cpp" />
+    <ClCompile Include="src\SignalStack.cpp" />
     <ClCompile Include="src\Scheduler.cpp" />
-    <ClInclude Include="include\RessetableStack.h" />
+    <ClInclude Include="include\SignalStack.h" />
     <ClInclude Include="src\SchedulerModel.cpp" />
   </ItemGroup>
   <ItemGroup>

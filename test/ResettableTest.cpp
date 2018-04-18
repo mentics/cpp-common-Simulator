@@ -5,6 +5,7 @@
 //#include "date.h"
 #include <iostream>
 #include <string>
+#include "SignalStack.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -37,46 +38,66 @@ namespace MenticsGame {
 			//setupLog();
 		}
 
-		TEST_METHOD(TestResettableReset) {
+
+		TEST_METHOD(TestResettableStack) 
+		{
 			setupLog();
-			std::vector<Entity> v;
-			Resettable<uint64_t> R;
-
-
-			Entity e;
-			e.value = 5555;
-
-			R.addItem(1, &v, e);
-			R.changeValue(2, &e.value, 4444);
-			R.addItem(2, &v, e);
-			R.changeValue(2, &e.value, 3333);
-			R.addItem(2, &v, e);
-			R.deleteItem(3, &v, 2);
-			R.deleteItem(3, &v, 1);
 			
-			R.reset(2);
-			
-			if(e.value != v[0].value)
-			{
-				mlog->info("Entity {0} vector {1}", e.value, v[0].value);
-				Assert::Fail(L"Fisrt Entity object value does not match vecotr [0] value ");
-			}
-			
+			SignalStack<int, int> rs;
 
-			R.reset(0);
+			rs.push(0, 0);
+			rs.push(1, 2);
+			rs.push(2, 4);
 
-			
-			for (Entity s : v)mlog->info("val : {0}", s.value);
+			if (rs.peek() != 2)Assert::Fail();
 
-			if (!v.empty())
-			{
-				mlog->error("size : {0} should be 0", v.size());
-				Assert::Fail(L"size of vector should be 0");
-			};
+			rs.pop(4);
 
-			
+			if (rs.peek() != 1); Assert::Fail();
 
-			
+
 		}
+
+		//TEST_METHOD(TestResettableReset) {
+		//	setupLog();
+		//	std::vector<Entity> v;
+		//	Resettable<uint64_t> R;
+		//
+		//
+		//	Entity e;
+		//	e.value = 5555;
+		//
+		//	R.addItem(1, &v, e);
+		//	R.changeValue(2, &e.value, 4444);
+		//	R.addItem(2, &v, e);
+		//	R.changeValue(2, &e.value, 3333);
+		//	R.addItem(2, &v, e);
+		//	R.deleteItem(3, &v, 2);
+		//	R.deleteItem(3, &v, 1);
+		//	
+		//	R.reset(2);
+		//	
+		//	if(e.value != v[0].value)
+		//	{
+		//		mlog->info("Entity {0} vector {1}", e.value, v[0].value);
+		//		Assert::Fail(L"Fisrt Entity object value does not match vecotr [0] value ");
+		//	}
+		//	
+		//
+		//	R.reset(0);
+		//
+		//	
+		//	for (Entity s : v)mlog->info("val : {0}", s.value);
+		//
+		//	if (!v.empty())
+		//	{
+		//		mlog->error("size : {0} should be 0", v.size());
+		//		Assert::Fail(L"size of vector should be 0");
+		//	};
+		//
+		//	
+		//
+		//	
+		//}
 	};
 }
