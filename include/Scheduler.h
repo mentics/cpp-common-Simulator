@@ -4,6 +4,8 @@
 #include "MenticsCommon.h"
 #include "PriorityQueue.h"
 #include "EventBases.h"
+#include "SchedulerModel.h"
+#include "../src/SchedulerModel.cpp" 
 
 namespace chrono = std::chrono;
 
@@ -53,39 +55,6 @@ public:
 	EventZero() : Event() {}
 	void run(SchedulatorPtr<Model, TimeType> sched, nn::nn<Model*> model) {};
 };
-
-template <typename Model, typename TimeType>
-class Scheduler;
-
-template <typename Model, typename TimeType>
-class SchedulerModel {
-	TimeType maxTimeAhead = 2E9;
-	moodycamel::ConcurrentQueue<EventUniquePtr<Model, TimeType>> incoming;
-	PriorityQueue<EventUniquePtr<Model, TimeType>, decltype(&Event<Model, TimeType>::compare)> processing;
-	std::deque<EventUniquePtr<Model, TimeType>> forReset;
-	std::deque<OutEventUniquePtr<TimeType>> outgoing;
-
-public:
-	friend class Scheduler<Model, TimeType>;
-	SchedulerModel() : incoming(1024), processing(&Event<Model, TimeType>::compare) {}
-	~SchedulerModel() {
-		mlog->error("SchedulerModel destructor");
-	}
-
-	// Runs on outside thread
-	// TODO: make this method only available from Scheduler
-	void schedule(EventUniquePtr<Model, TimeType>&& ev);
-
-	// Returns minimum timeToRun of ingested events
-	TimeType processIncoming();
-	void reset(TimeType toTime);
-	Event<Model, TimeType>* first(TimeType maxTime);
-	void completeFirst();
-
-	void addOutEvent(OutEventUniquePtr<TimeType>&& outEvent);
-	void consumeOutgoing(std::function<void(OutEventPtr<TimeType>)> handler, TimeType upToTime);
-};
-PTRS2(SchedulerModel, Model, TimeType)
 
 
 template <typename Model, typename TimeType>

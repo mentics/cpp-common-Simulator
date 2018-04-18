@@ -4,12 +4,14 @@
 
 namespace MenticsGame {
 
-template <typename TimeType>
-struct OutEvent {
-	const TimeType occursAt;
+	enum EventType{EventQuipCreated};
 
-	OutEvent(const TimeType occursAt) : occursAt(occursAt) {}
-};
-PTRS1(OutEvent, TimeType)
+	template <typename TimeType>
+	struct OutEvent {
+		const TimeType occursAt;
+		EventType type;
+		OutEvent(const TimeType occursAt, EventType t) : occursAt(occursAt), type(t) {}
+	};
+	PTRS1(OutEvent, TimeType)
 
 }

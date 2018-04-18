@@ -72,6 +72,8 @@ public:
 			sched.schedule(i, uniquePtrC<TestEvent, TestEvent>());
 		}
 
+		sched.reset(0);
+
 		int counter = 0;
 		int counter2 = 0;
 
@@ -89,6 +91,7 @@ public:
 			Assert::Fail();
 		}
 
+		
 		//schedModel.consumeOutgoing([&t, &sched](auto ev, 5) {
 		//	log->trace("checking {0}", ev->occursAt);
 		//
@@ -97,6 +100,12 @@ public:
 		//});
 		//sched.stop();
 	}
+
+	TEST_METHOD(TestSchedulerModel)
+	{
+
+	}
+
 };
 
 }

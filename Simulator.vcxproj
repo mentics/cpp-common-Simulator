@@ -158,9 +158,11 @@
     <ClInclude Include="include\Scheduler.h" />
     <ClInclude Include="include\Resettable.h" />
     <ClInclude Include="include\Signal.h" />
+    <ClInclude Include="include\SchedulerModel.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Scheduler.cpp" />
+    <ClInclude Include="src\SchedulerModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\common\Common.vcxproj">
