@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include "SignalStack.h"
+#include "../src/SignalStack.cpp"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -39,21 +40,31 @@ namespace MenticsGame {
 		}
 
 
-		TEST_METHOD(TestResettableStack) 
+		TEST_METHOD(TestSignalStack) 
 		{
 			setupLog();
 			
 			SignalStack<int, int> rs;
 
 			rs.push(0, 0);
+			rs.push(77, 0);
+			
 			rs.push(1, 2);
 			rs.push(2, 4);
 
+			mlog->error(rs.peek());
 			if (rs.peek() != 2)Assert::Fail();
 
 			rs.pop(4);
 
-			if (rs.peek() != 1); Assert::Fail();
+			mlog->error(rs.peek());
+			if (rs.peek() != 1) Assert::Fail();
+
+			rs.reset(1);
+			mlog->error(rs.peek());
+			if (rs.peek() != 77) Assert::Fail();
+
+
 
 
 		}

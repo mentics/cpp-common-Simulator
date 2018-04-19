@@ -14,7 +14,7 @@ template<typename ItemType, typename TimeType>
 void SignalStack<ItemType, TimeType>::pop(TimeType at)
 {
 	m_stack.top().deletedAt = at;
-	deleted.push(m_stack.top());
+	deleted.push_back(m_stack.top());
 	m_stack.pop();
 }
 
@@ -27,14 +27,16 @@ ItemType SignalStack<ItemType, TimeType>::peek()
 template<typename ItemType, typename TimeType>
 void SignalStack<ItemType, TimeType>::reset(TimeType resetAt)
 {
-	while ((!m_stack.empty()) && resetAt <= m_stack.back()->time)
-	{
-		m_stack.pop_back();
-	}
+	
 
-	while ((!deleted.empty()) && resetAt <= deleted.back()->deletedAt)
+	while ((!deleted.empty()) && resetAt < deleted.back().deletedAt && resetAt > m_stack.top().time)
 	{
-		m_stack.push_back(deleted.back());
+		m_stack.push(deleted.back());
+		deleted.pop_back();
+	}
+	while ((!m_stack.empty()) && resetAt <= m_stack.top().time)
+	{
+		m_stack.pop();
 	}
 }
 

@@ -45,7 +45,7 @@ public:
 		if (timeToRun + 0.5 > timeProvider.now()) mlog->error(" run at runAt");
 		OutEvent<TimePoint> e(0, EventQuipCreated); // it should not be EventQuipCreated but for now
 
-		sched->addOutEvent(uniquePtrC<OutEvent<TimePoint>, OutEvent<TimePoint>>(100));
+		sched->addOutEvent(uniquePtrC<OutEvent<TimePoint>, OutEvent<TimePoint>>(100, EventQuipCreated));
 
 		system("color 00");
 		ran = true;
