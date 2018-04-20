@@ -36,26 +36,24 @@ namespace MenticsGame {
 
 	public:
 		TEST_CLASS_INITIALIZE(BeforeClass) {
-			//setupLog();
+			setupLog();
 		}
 
 
 		TEST_METHOD(TestSignalStack) 
 		{
-			setupLog();
-			
 			SignalStack<int, int> rs;
 
 			rs.push(0, 0);
 			rs.push(77, 0);
-			
+			rs.pop(2);
 			rs.push(1, 2);
 			rs.push(2, 4);
 
 			mlog->error(rs.peek());
 			if (rs.peek() != 2)Assert::Fail();
-
-			rs.pop(4);
+			
+			rs.pop(5);
 
 			mlog->error(rs.peek());
 			if (rs.peek() != 1) Assert::Fail();
@@ -64,7 +62,10 @@ namespace MenticsGame {
 			mlog->error(rs.peek());
 			if (rs.peek() != 77) Assert::Fail();
 
+			rs.removeOldest(1);
 
+		
+			if (!rs.empty()) { mlog->error("should be empty"); Assert::Fail(); }
 
 
 		}

@@ -13,8 +13,9 @@ public:
 	void push(ItemType i, TimeType at);
 	void pop(TimeType at); 
 	ItemType peek();
+	bool empty();
 	void reset(TimeType resetAt);
-	void removeOldest(TimeType upTo, TimeType now);   
+	void removeOldest(TimeType upTo);   
 
 };
 

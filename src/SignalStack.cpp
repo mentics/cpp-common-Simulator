@@ -7,7 +7,7 @@
 template<typename ItemType, typename TimeType>
 void SignalStack<ItemType, TimeType>::push(ItemType i, TimeType at)
 {
-	m_stack.push({ i,at });
+	m_stack.push({ i,at,0});
 }
 
 template<typename ItemType, typename TimeType>
@@ -25,29 +25,39 @@ ItemType SignalStack<ItemType, TimeType>::peek()
 }
 
 template<typename ItemType, typename TimeType>
+bool SignalStack<ItemType, TimeType>::empty()
+{
+	return m_stack.empty();
+}
+
+template<typename ItemType, typename TimeType>
 void SignalStack<ItemType, TimeType>::reset(TimeType resetAt)
 {
-	
-
-	while ((!deleted.empty()) && resetAt < deleted.back().deletedAt && resetAt > m_stack.top().time)
-	{
-		m_stack.push(deleted.back());
-		deleted.pop_back();
-	}
 	while ((!m_stack.empty()) && resetAt <= m_stack.top().time)
 	{
 		m_stack.pop();
 	}
+	while ((!deleted.empty()) && resetAt <= deleted.front().deletedAt && resetAt > deleted.front().time)
+	{
+		m_stack.push(deleted.front());
+		deleted.pop_front();
+	}
 }
 
 template<typename ItemType, typename TimeType>
-void SignalStack<ItemType, TimeType>::removeOldest(TimeType upTo, TimeType now)
+void SignalStack<ItemType, TimeType>::removeOldest(TimeType upTo)
 {
-	
-	for (auto time = m_stack.top().time; time < upTo; time = m_stack.top().time) {
-		m_stack.top().deletedAt = now;
-		deleted.push(m_stack.top());
-		m_stack.pop_front();
+	if (m_stack.empty())return;
+
+	TimeType t = m_stack.top().time;
+
+	while(t < upTo){
+		m_stack.pop();
+
+		if(!m_stack.empty())
+		t = m_stack.top().time;
+		else break;
+
 	}
 	
 }
