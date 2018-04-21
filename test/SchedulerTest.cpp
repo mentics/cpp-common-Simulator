@@ -1,12 +1,11 @@
 #include "stdafx.h"
-
 #include <thread>
-
-#include "MenticsCommonTest.h"
-#include "Scheduler.h"
 #include "nn.hpp"
+#include "MenticsCommonTest.h"
 
-#include "Scheduler.cpp"  // This should be the only place that includes this at this level
+// Template imports
+#include "Scheduler.cpp"
+#include "SchedulerModel.cpp"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std::chrono_literals;
@@ -36,11 +35,11 @@ struct TestTimeProvider : public SchedulerTimeProvider<TimePoint> {
 bool ran = false;
 TestTimeProvider timeProvider;
 
-class TestEvent : public Event<TestModel, TimePoint> {
+class TestEvent : public Event<TimePoint,TestModel> {
 public:
 	//TestEvent(const TimePoint created, const TimePoint runAt) : Event(created, runAt) {}
 
-	void run(SchedulatorPtr<TestModel, TimePoint> sched, nn::nn<TestModel*> model) {
+	void run(SchedulatorPtr<TimePoint,TestModel> sched, nn::nn<TestModel*> model) {
 		mlog->error("TestEvent for {0}", timeToRun);
 		if (timeToRun + 0.5 > timeProvider.now()) mlog->error(" run at runAt");
 		OutEvent<TimePoint> e(0, EventQuipCreated); // it should not be EventQuipCreated but for now
@@ -64,12 +63,12 @@ public:
 	TEST_METHOD(TestScheduler) {
 		setupLog();
 		mlog->error("TestEvent for");
-		SchedulerModel<TestModel, TimePoint> schedModel;
+		SchedulerModel<TimePoint,TestModel> schedModel;
 		TestModel model;
-		Scheduler<TestModel, TimePoint> sched(nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
+		Scheduler<TimePoint,TestModel> sched(nn::nn_addr(schedModel), nn::nn_addr(timeProvider), nn::nn_addr(model));
 
 		for (int i = 0; i < 50; i++) {
-			sched.schedule(i, uniquePtrC<TestEvent, TestEvent>());
+			sched.schedule(i, uniquePtrC<TestEvent,TestEvent>());
 		}
 
 		sched.reset(0);

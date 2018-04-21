@@ -3,25 +3,25 @@
 
 using namespace MenticsGame;
 
-template <typename Model, typename TimeType>
-void SchedulerModel<Model, TimeType>::schedule(EventUniquePtr<Model, TimeType>&& ev) {
+template<typename TimeType, typename Model>
+void SchedulerModel<TimeType,Model>::schedule(EventUniquePtr<TimeType,Model>&& ev) {
 	mlog->trace("Scheduling event");
 	incoming.enqueue(std::move(ev));
 }
 
-template <typename Model, typename TimeType>
-TimeType SchedulerModel<Model, TimeType>::processIncoming() {
+template<typename TimeType, typename Model>
+TimeType SchedulerModel<TimeType,Model>::processIncoming() {
 	mlog->trace("SchedulerModel::processIncoming");
 	// TODO: assert scheduler thread?
-	EventUniquePtr<Model, TimeType> ev = uniquePtr<EventZero<Model, TimeType>>(); // TODO: simplify this?
+	EventUniquePtr<TimeType,Model> ev = uniquePtr<EventZero<TimeType,Model>>(); // TODO: simplify this?
 	while (incoming.try_dequeue(ev)) {
 		processing.push(std::move(ev));
 	}
 	return !processing.empty() ? processing.top()->timeToRun : FOREVER;
 }
 
-template <typename Model, typename TimeType>
-void SchedulerModel<Model, TimeType>::reset(TimeType toTime) {
+template<typename TimeType, typename Model>
+void SchedulerModel<TimeType,Model>::reset(TimeType toTime) {
 	// TODO
 	// TODO: delete items off outgoing > toTime
 	
@@ -35,10 +35,10 @@ void SchedulerModel<Model, TimeType>::reset(TimeType toTime) {
 	}
 }
 
-template <typename Model, typename TimeType>
-Event<Model, TimeType>* SchedulerModel<Model, TimeType>::first(TimeType maxTime) {
+template<typename TimeType, typename Model>
+Event<TimeType,Model>* SchedulerModel<TimeType,Model>::first(TimeType maxTime) {
 	if (!processing.empty()) {
-		Event<Model, TimeType>* top = processing.top().get();
+		Event<TimeType,Model>* top = processing.top().get();
 		const TimeType nextTime = top->timeToRun;
 		if (nextTime <= maxTime) {
 			return top;
@@ -47,18 +47,18 @@ Event<Model, TimeType>* SchedulerModel<Model, TimeType>::first(TimeType maxTime)
 	return nullptr;
 }
 
-template <typename Model, typename TimeType>
-void SchedulerModel<Model, TimeType>::completeFirst() {
+template<typename TimeType, typename Model>
+void SchedulerModel<TimeType,Model>::completeFirst() {
 	forReset.push_back(processing.pop());
 }
 
-template <typename Model, typename TimeType>
-void SchedulerModel<Model, TimeType>::addOutEvent(OutEventUniquePtr<TimeType>&& outEvent) {
+template<typename TimeType, typename Model>
+void SchedulerModel<TimeType,Model>::addOutEvent(OutEventUniquePtr<TimeType>&& outEvent) {
 	outgoing.push_back(std::move(outEvent));
 }
 
-template <typename Model, typename TimeType>
-void SchedulerModel<Model, TimeType>::consumeOutgoing(std::function<void(OutEventPtr<TimeType>)> handler, TimeType upToTime) {
+template<typename TimeType, typename Model>
+void SchedulerModel<TimeType,Model>::consumeOutgoing(const std::function<void(OutEventPtr<TimeType>)> handler, const TimeType upToTime) {
 	while (!outgoing.empty()) {
 		OutEventPtr<TimeType> ev = NN_CHECK_ASSERT(outgoing.front().get());
 		if (ev->occursAt <= upToTime) {
@@ -66,7 +66,7 @@ void SchedulerModel<Model, TimeType>::consumeOutgoing(std::function<void(OutEven
 			handler(ev);
 			outgoing.pop_front();
 
-			SignalValue<Model, TimeType>::oldest = upToTime - maxTimeAhead;
+			SignalValue<Model,TimeType>::oldest = upToTime - maxTimeAhead;
 			// Finally after travelling through 3 queues, the event's eventful life has come to an end.
 			// delete ev; <- it's deleted by unique_ptr
 		}

@@ -4,46 +4,41 @@
 #include "PriorityQueue.h"
 #include "EventBases.h"
 
-
 namespace MenticsGame {
 
+template<typename TimeType, typename Model> struct Event;
+PTRS2(Event, TimeType, Model)
 
-	template <typename Model, typename TimeType> struct Event;
-	PTRS2(Event, Model, TimeType)
+template<typename TimeType, typename Model>
+class Scheduler;
 
-	template <typename Model, typename TimeType>
-	class Scheduler;
+template <typename TimeType, typename Model>
+class SchedulerModel {
+	TimeType maxTimeAhead = 2E9;
+	moodycamel::ConcurrentQueue<EventUniquePtr<TimeType,Model>> incoming;
+	PriorityQueue<EventUniquePtr<TimeType,Model>, decltype(&Event<TimeType,Model>::compare)> processing;
+	std::deque<EventUniquePtr<TimeType,Model>> forReset;
+	std::deque<OutEventUniquePtr<TimeType>> outgoing;
 
+protected:
+	void schedule(EventUniquePtr<TimeType,Model>&& ev);
 
+public:
+	friend class Scheduler<TimeType,Model>;
+	SchedulerModel() : incoming(1024), processing(&Event<TimeType,Model>::compare) {}
+	~SchedulerModel() {
+		mlog->error("SchedulerModel destructor");
+	}
 
-	template <typename Model, typename TimeType>
-	class SchedulerModel {
-		TimeType maxTimeAhead = 2E9;
-		moodycamel::ConcurrentQueue<EventUniquePtr<Model, TimeType>> incoming;
-		PriorityQueue<EventUniquePtr<Model, TimeType>, decltype(&Event<Model, TimeType>::compare)> processing;
-		std::deque<EventUniquePtr<Model, TimeType>> forReset;
-		std::deque<OutEventUniquePtr<TimeType>> outgoing;
+	// Returns minimum timeToRun of ingested events
+	TimeType processIncoming();
+	void reset(TimeType toTime);
+	Event<TimeType,Model>* first(TimeType maxTime);
+	void completeFirst();
 
-	protected:
-		void schedule(EventUniquePtr<Model, TimeType>&& ev);
-	public:
-		friend class Scheduler<Model, TimeType>;
-		SchedulerModel() : incoming(1024), processing(&Event<Model, TimeType>::compare) {}
-		~SchedulerModel() {
-			mlog->error("SchedulerModel destructor");
-		}
+	void addOutEvent(OutEventUniquePtr<TimeType>&& outEvent);
+	void consumeOutgoing(const std::function<void(OutEventPtr<TimeType>)> handler, const TimeType upToTime);
+};
+PTRS2(SchedulerModel, Model, TimeType)
 
-	
-		
-
-		// Returns minimum timeToRun of ingested events
-		TimeType processIncoming();
-		void reset(TimeType toTime);
-		Event<Model, TimeType>* first(TimeType maxTime);
-		void completeFirst();
-
-		void addOutEvent(OutEventUniquePtr<TimeType>&& outEvent);
-		void consumeOutgoing(std::function<void(OutEventPtr<TimeType>)> handler, TimeType upToTime);
-	};
-	PTRS2(SchedulerModel, Model, TimeType)
 }

@@ -1,28 +1,14 @@
 #pragma once
-
-#include "concurrentqueue.h"
 #include "MenticsCommon.h"
-#include "PriorityQueue.h"
 #include "EventBases.h"
 #include "SchedulerModel.h"
-#include "../src/SchedulerModel.cpp" 
 
 namespace chrono = std::chrono;
 
 namespace MenticsGame {
 
-template <typename Model, typename TimeType> struct Event;
-PTRS2(Event, Model, TimeType)
-
-template <typename Model, typename TimeType>
-class Schedulator {
-public:
-	virtual void schedule(TimeType afterDuration, EventUniquePtr<Model, TimeType>&& ev) = 0;
-	virtual void addOutEvent(OutEventUniquePtr<TimeType>&& outEvent) = 0;
-};
-PTRS2(Schedulator, Model, TimeType)
-
-
+////
+// An interface to provide time to the Scheduler.
 template <typename TimeType>
 struct SchedulerTimeProvider {
 	virtual TimeType now() = 0;
@@ -31,35 +17,11 @@ struct SchedulerTimeProvider {
 PTRS1(SchedulerTimeProvider, TimeType)
 
 
-template <typename Model, typename TimeType>
-struct Event {
-	// NOTE: these should be const, but they're set by scheduler inside schedule() method
-	TimeType created;
-	TimeType timeToRun;
-
-	//Event(const TimeType created, const TimeType timeToRun) : created(created), timeToRun(timeToRun) {
-	//}
-
-	static bool compare(const EventUniquePtr<Model, TimeType>& ev1, const EventUniquePtr<Model, TimeType>& ev2) 
-	{
-		return ev1->timeToRun > ev2->timeToRun;
-	}
-
-	virtual void run(SchedulatorPtr<Model, TimeType> sched, nn::nn<Model*> model) = 0;
-};
-
-
-template <typename Model, typename TimeType>
-class EventZero : public Event<Model, TimeType> {
-public:
-	EventZero() : Event() {}
-	void run(SchedulatorPtr<Model, TimeType> sched, nn::nn<Model*> model) {};
-};
-
-
-template <typename Model, typename TimeType>
-class Scheduler : public Schedulator<Model, TimeType> {
-	SchedulerModelPtr<Model, TimeType> schedModel;
+////
+// A Scheduler that runs in it's own thread and processes Events.
+template <typename TimeType, typename Model>
+class Scheduler : public Schedulator<TimeType,Model> {
+	SchedulerModelPtr<TimeType,Model> schedModel;
 	SchedulerTimeProviderPtr<TimeType> timeProvider;
 	nn::nn<Model*> model;
 
@@ -73,9 +35,9 @@ class Scheduler : public Schedulator<Model, TimeType> {
 
 public:
 	friend class SchedulerTest;  
-	Scheduler(SchedulerModelPtr<Model, TimeType> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model)
+	Scheduler(SchedulerModelPtr<TimeType,Model> schedModel, SchedulerTimeProviderPtr<TimeType> timeProvider, nn::nn<Model*> model)
 			: schedModel(schedModel), timeProvider(timeProvider), model(model),
-			  theThread(&Scheduler<Model, TimeType>::run, this),
+			  theThread(&Scheduler<TimeType,Model>::run, this),
 			  processedTime(0) {}
 	
 
@@ -86,7 +48,7 @@ public:
 
 	void run();
 
-	void schedule(TimeType afterDuration, EventUniquePtr<Model, TimeType>&& ev);
+	void schedule(TimeType afterDuration, EventUniquePtr<TimeType,Model>&& ev);
 
 	void wakeUp() {
 		wait.notify_all();
@@ -103,9 +65,16 @@ public:
 		} while (processedTime < until && !schedModel->processing.empty());
 	}
 
-	TimeType getPT() { return processedTime; }
 	void addOutEvent(OutEventUniquePtr<TimeType>&& outEvent) { schedModel->addOutEvent(std::move(outEvent)); }
-	void consumeOutgoing(std::function<void(OutEventPtr<TimeType>)> handler, TimeType upToTime) { schedModel->consumeOutgoing(handler, upToTime); }
+	void consumeOutgoing(const std::function<void(OutEventPtr<TimeType>)> handler, const TimeType upToTime) {
+		// TODO: schedModel->consumeOutgoing(handler, upToTime);
+	}
+
+	//TimeType getProcessedTime() { return processedTime; }
+
+	void listen(const UpdateKey key, std::function<void(SchedulatorP const)> handler) override {
+		// TODO
+	}
 };
 PTRS2(Scheduler, Model, TimeType)
 

@@ -156,7 +156,6 @@
     <ClInclude Include="include\EventBases.h" />
     <ClInclude Include="include\readerwriterqueue.h" />
     <ClInclude Include="include\Scheduler.h" />
-    <ClInclude Include="include\Resettable.h" />
     <ClInclude Include="include\Signal.h" />
     <ClInclude Include="include\SchedulerModel.h" />
   </ItemGroup>
@@ -173,7 +172,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Signal.cpp" />
-    <ClCompile Include="src\Resettable.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

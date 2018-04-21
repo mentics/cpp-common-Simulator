@@ -7,8 +7,8 @@ namespace MenticsGame {
 
 // This is the method run by the Scheduler thread.
 // It loops forever and processes the events on the processing queue up to 
-template <typename Model, typename TimeType>
-void Scheduler<Model, TimeType>::run() {
+template<typename TimeType, typename Model>
+void Scheduler<TimeType,Model>::run() {
 	mlog->trace("Scheduler::run");
 
 	while (true) {
@@ -21,7 +21,7 @@ void Scheduler<Model, TimeType>::run() {
 			}
 			TimeType now = timeProvider->now();
 			maxTime = now + schedModel->maxTimeAhead;
-			Event<Model, TimeType>* ev = schedModel->first(maxTime);
+			Event<TimeType,Model>* ev = schedModel->first(maxTime);
 			if (ev != NULL) {
 				nextTime = ev->timeToRun;
 				if (nextTime < now) {
@@ -53,8 +53,8 @@ void Scheduler<Model, TimeType>::run() {
 	}
 }
 
-template <typename Model, typename TimeType>
-void Scheduler<Model, TimeType>::schedule(TimeType afterDuration, EventUniquePtr<Model, TimeType>&& ev) {
+template<typename TimeType, typename Model>
+void Scheduler<TimeType,Model>::schedule(TimeType afterDuration, EventUniquePtr<TimeType,Model>&& ev) {
 	TimeType n = timeProvider->now();
 	ev->created = n;
 	ev->timeToRun = n + afterDuration;
@@ -63,16 +63,16 @@ void Scheduler<Model, TimeType>::schedule(TimeType afterDuration, EventUniquePtr
 	wakeUp();
 }
 
-template <typename Model, typename TimeType>
-void Scheduler<Model, TimeType>::reset(TimeType resetToTime) {
+template<typename TimeType, typename Model>
+void Scheduler<TimeType,Model>::reset(TimeType resetToTime) {
 	// TODO: reset queues to what they were at resetToTime
 	schedModel->reset(resetToTime);
 	model->reset(resetToTime);
 }
 
 
-template <typename Model, typename TimeType>
-void Scheduler<Model, TimeType>::stop() {
+template<typename TimeType, typename Model>
+void Scheduler<TimeType,Model>::stop() {
 	shouldStop = true;
 	mlog->error("notifying...");
 	wait.notify_all();

@@ -4,13 +4,9 @@
 #include <functional>
 #include <list>
 
-
-
-namespace MenticsGame
-{
+namespace MenticsGame {
 	template <typename T, typename TimeType>
-	class SignalCollection
-	{
+	class SignalCollection {
 		ONLY_MOVE(SignalCollection);
 
 		struct SignalCollectionItem {
@@ -76,38 +72,32 @@ namespace MenticsGame
 
 		public:
 
-			SignalUnique (nn::nn_unique_ptr<T>&& v)
-			{
+			SignalUnique (nn::nn_unique_ptr<T>&& v) {
 				values.emplace_back(std::move(v), 0);
 			}
 
-			T* get(TimeType at)
-			{
-				for (std::deque<ValueAtTimeUnique>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i)
-				{
+			nn::nn<T*> get(TimeType at) {
+				for (std::deque<ValueAtTimeUnique>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i) {
 					if (i->at <= at) {
-						return i->value.get();
+						return toPtr(i->value);// .get();
 					}
 				}
 			}
 
-			void add(nn::nn_unique_ptr<T>&& val, TimeType t)  
-			{
-				if (values.size() > 1 && values[1].at <= SignalValue<TimeType>::oldest) values.pop_front();
+			void add(nn::nn_unique_ptr<T>&& val, TimeType t) {
+				if (values.size() > 1 && values[1].at <= SignalValue<T,TimeType>::oldest) values.pop_front();
 				values.emplace_back(std::move(val), t);
 			}
 
-			void reset(TimeType resetTime)
-			{
+			void reset(TimeType resetTime) {
 				while (resetTime < values.back().at)values.pop_back();
 			}
 
-			void removeOldest(TimeType upTo)
-			{
+			void removeOldest(TimeType upTo) {
 				for (auto time = values.front().at; time < upTo; time = values.front().at) {
 					values.pop_front();
 				}
-     	}
+	     	}
 		};
 
 		template <typename T, typename TimeType>
