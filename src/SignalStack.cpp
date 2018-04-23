@@ -5,28 +5,24 @@
 
 
 template<typename ItemType, typename TimeType>
-void SignalStack<ItemType, TimeType>::push(ItemType i, TimeType at)
-{
+void SignalStack<ItemType, TimeType>::push(ItemType i, TimeType at) {
 	m_stack.push({ i,at,0});
 }
 
 template<typename ItemType, typename TimeType>
-void SignalStack<ItemType, TimeType>::pop(TimeType at)
-{
+void SignalStack<ItemType, TimeType>::pop(TimeType at) {
 	m_stack.top().deletedAt = at;
 	deleted.push_back(m_stack.top());
 	m_stack.pop();
 }
 
 template<typename ItemType, typename TimeType>
-ItemType SignalStack<ItemType, TimeType>::peek()
-{
+ItemType SignalStack<ItemType, TimeType>::peek() {
 	return m_stack.top().item;
 }
 
 template<typename ItemType, typename TimeType>
-bool SignalStack<ItemType, TimeType>::empty()
-{
+bool SignalStack<ItemType, TimeType>::empty() {
 	return m_stack.empty();
 }
 
