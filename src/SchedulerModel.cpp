@@ -17,7 +17,7 @@ TimeType SchedulerModel<TimeType, Model>::processIncoming() {
     while (incoming.try_dequeue(ev)) {
         processing.push(std::move(ev));
     }
-    return !processing.empty() ? processing.top()->timeToRun : FOREVER;
+    return !processing.empty() ? processing.top()->timeToRun : (TimeType)FOREVER;
 }
 
 template<typename TimeType, typename Model>

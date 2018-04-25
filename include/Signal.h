@@ -5,162 +5,152 @@
 #include <list>
 
 namespace MenticsGame {
-	template <typename T, typename TimeType>
-	class SignalCollection {
-		ONLY_MOVE(SignalCollection);
 
-		struct SignalCollectionItem {
-			TimeType created;
-			TimeType deleted = FOREVER;
-			T value;
-			SignalCollectionItem(TimeType created, T&& v) : created(created), value(std::move(v)) {}
-		};
+template <typename T, typename TimeType>
+class SignalCollection {
+    ONLY_MOVE(SignalCollection);
 
-		std::list<SignalCollectionItem> vals;
-	public:
-		SignalCollection() {}
+    struct SignalCollectionItem {
+        TimeType created;
+        TimeType deleted = (TimeType)FOREVER;
+        T value;
+        SignalCollectionItem(TimeType created, T&& v) : created(created), value(std::move(v)) {}
+    };
 
-		void forEach(TimeType at, std::function<void(nn::nn<T*>)> f)
-		{
-			for (SignalCollectionItem& i : vals) {
-				if (i.created <= at && at < i.deleted) {
-					f(nn::nn_addr(i.value));
-				}
-				else {
-					continue;
-				}
-			}
-		}
+    std::list<SignalCollectionItem> vals;
+public:
+    SignalCollection() {}
 
-		nn::nn<T*> add(T&& value, TimeType now)
-		{ 
-			// TODO: vals.remove_if deleted < SignalValue::oldest
-			vals.emplace_back(now, std::move(value));
-			return nn::nn_addr(vals.back().value);    
-		}
+    void forEach(TimeType at, std::function<void(nn::nn<T*>)> f) {
+        for (SignalCollectionItem& i : vals) {
+            if (i.created <= at && at < i.deleted) {
+                f(nn::nn_addr(i.value));
+            } else {
+                continue;
+            }
+        }
+    }
 
-		void removeOld(TimeType upTo)
-		{
-			vals.remove_if([upTo](const SignalCollectionItem& a) {return a.deleted < upTo; });
-		}
+    nn::nn<T*> add(T&& value, TimeType now) {
+        // TODO: vals.remove_if deleted < SignalValue::oldest
+        vals.emplace_back(now, std::move(value));
+        return nn::nn_addr(vals.back().value);
+    }
 
-		void reset(TimeType resetTime)
-		{
-			vals.remove_if([resetTime](const SignalCollectionItem& a) {return a.created > resetTime; });
-			for (SignalCollectionItem& i : vals) {
-				if (i.deleted >= resetTime) {
-					i.deleted = FOREVER;
-					if (i.deleted > resetTime) i.value.reset(resetTime);
-				}
-			}
-		}
+    void removeOld(TimeType upTo) {
+        vals.remove_if([upTo](const SignalCollectionItem& a) {return a.deleted < upTo; });
+    }
 
-		};
+    void reset(TimeType resetTime) {
+        vals.remove_if([resetTime](const SignalCollectionItem& a) {return a.created > resetTime; });
+        for (SignalCollectionItem& i : vals) {
+            if (i.deleted >= resetTime) {
+                i.deleted = (TimeType)FOREVER;
+                if (i.deleted > resetTime) i.value.reset(resetTime);
+            }
+        }
+    }
 
-		template <typename T, typename TimeType>
-		class SignalUnique
-		{
-			ONLY_MOVE(SignalUnique);
+};
 
-			struct ValueAtTimeUnique {
-				ValueAtTimeUnique(nn::nn_unique_ptr<T>&& value, TimeType at) : value(std::move(value)), at(at) {}
-				nn::nn_unique_ptr<T> value;
-				TimeType at;
-			};
+template <typename T, typename TimeType>
+class SignalUnique {
+    ONLY_MOVE(SignalUnique);
 
-			std::deque<ValueAtTimeUnique> values;
+    struct ValueAtTimeUnique {
+        ValueAtTimeUnique(nn::nn_unique_ptr<T>&& value, TimeType at) : value(std::move(value)), at(at) {}
+        nn::nn_unique_ptr<T> value;
+        TimeType at;
+    };
 
-		public:
+    std::deque<ValueAtTimeUnique> values;
 
-			SignalUnique (nn::nn_unique_ptr<T>&& v) {
-				values.emplace_back(std::move(v), 0);
-			}
+public:
 
-			nn::nn<T*> get(TimeType at) {
-				for (std::deque<ValueAtTimeUnique>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i) {
-					if (i->at <= at) {
-						return toPtr(i->value);// .get();
-					}
-				}
-			}
+    SignalUnique(nn::nn_unique_ptr<T>&& v) {
+        values.emplace_back(std::move(v), 0);
+    }
 
-			void add(nn::nn_unique_ptr<T>&& val, TimeType t) {
-				if (values.size() > 1 && values[1].at <= SignalValue<T,TimeType>::oldest) values.pop_front();
-				values.emplace_back(std::move(val), t);
-			}
+    nn::nn<T*> get(TimeType at) {
+        for (std::deque<ValueAtTimeUnique>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i) {
+            if (i->at <= at) {
+                return toPtr(i->value);// .get();
+            }
+        }
+        throw "Could not find value in SignalUnique";
+    }
 
-			void reset(TimeType resetTime) {
-				while (resetTime < values.back().at)values.pop_back();
-			}
+    void add(nn::nn_unique_ptr<T>&& val, TimeType t) {
+        if (values.size() > 1 && values[1].at <= SignalValue<T, TimeType>::oldest) values.pop_front();
+        values.emplace_back(std::move(val), t);
+    }
 
-			void removeOldest(TimeType upTo) {
-				for (auto time = values.front().at; time < upTo; time = values.front().at) {
-					values.pop_front();
-				}
-	     	}
-		};
+    void reset(TimeType resetTime) {
+        while (resetTime < values.back().at)values.pop_back();
+    }
 
-		template <typename T, typename TimeType>
-		class SignalValue
-		{
-			ONLY_MOVE(SignalValue);
+    void removeOldest(TimeType upTo) {
+        for (auto time = values.front().at; time < upTo; time = values.front().at) {
+            values.pop_front();
+        }
+    }
+};
 
-			struct ValueAtTime {
-				ValueAtTime(T value, TimeType at) : value(value), at(at) {}
-				T value;
-				TimeType at;
-			};
+template <typename T, typename TimeType>
+class SignalValue {
+    ONLY_MOVE(SignalValue);
 
-			std::deque<ValueAtTime> values;
+    struct ValueAtTime {
+        ValueAtTime(T value, TimeType at) : value(value), at(at) {}
+        T value;
+        TimeType at;
+    };
 
-		public:
-			static TimeType oldest;
+    std::deque<ValueAtTime> values;
 
-			SignalValue(T v) {
-				values.emplace_back(v, 0);
-			}
+public:
+    static TimeType oldest;
 
-			void reset(TimeType resetTime)
-			{
-				while (resetTime < values.back().at)values.pop_back();
-			}
+    SignalValue(T v) {
+        values.emplace_back(v, 0);
+    }
 
-			void removeOldest(TimeType upTo)
-			{
-				for (auto time = values.front().at; time < upTo; time = values.front().at) {
-					values.pop_front();
-				}
-			}
+    void reset(TimeType resetTime) {
+        while (resetTime < values.back().at)values.pop_back();
+    }
 
-			void add(T val, TimeType t)
-			{
-				if (values.size() > 1 && values[1].at <= oldest) values.pop_front();
-				values.emplace_back(val , t );
-			}
+    void removeOldest(TimeType upTo) {
+        for (auto time = values.front().at; time < upTo; time = values.front().at) {
+            values.pop_front();
+        }
+    }
 
-			const T& get(TimeType at)
-			{
-				for (std::deque<ValueAtTime>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i)
-				{
-					if (i->at <= at) {
-						return i->value;
-					}
-				}
-			}
-		};
+    void add(T val, TimeType t) {
+        if (values.size() > 1 && values[1].at <= oldest) values.pop_front();
+        values.emplace_back(val, t);
+    }
 
-		template <typename TimeType >
-		std::function<bool()> constantValue(TimeType t, TimeType now)
-		{
-			return [t,now]() {return now = > value};
-		}
+    const T& get(TimeType at) {
+        for (std::deque<ValueAtTime>::reverse_iterator i = values.rbegin(); i != values.rend(); ++i) {
+            if (i->at <= at) {
+                return i->value;
+            }
+        }
+        throw "Could not find value in SignalValue"
+    }
+};
 
-		template <typename TimeType >
-		std::function<double()> CappedLinearValue(double startGameTime, double initial, double rate, double max, TimeType now)
-		{
-			return [startGameTime, initial, rate, max, now]() {n = initial + rate * (now - startGameTime); return n > max ? max : n; };
-		}
+template <typename TimeType >
+std::function<bool()> constantValue(TimeType t, TimeType now) {
+    return [t, now]() {return now = > value};
+}
 
-		template<typename T, typename TimeType>
-		TimeType SignalValue<T, TimeType>::oldest = 0;
+template <typename TimeType >
+std::function<double()> CappedLinearValue(double startGameTime, double initial, double rate, double max, TimeType now) {
+    return [startGameTime, initial, rate, max, now]() {n = initial + rate * (now - startGameTime); return n > max ? max : n; };
+}
+
+template<typename T, typename TimeType>
+TimeType SignalValue<T, TimeType>::oldest = 0;
+
 }
