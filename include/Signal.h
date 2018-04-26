@@ -136,7 +136,7 @@ public:
                 return i->value;
             }
         }
-        throw "Could not find value in SignalValue"
+        throw "Could not find value in SignalValue";
     }
 };
 
